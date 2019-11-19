@@ -17,13 +17,13 @@ for i in range(37):
     #
     lin = LinearRegression()
     lin.fit(x, y)
-    poly = PolynomialFeatures(degree = 5)
+    poly = PolynomialFeatures(degree = 2)
     x_poly = poly.fit_transform(x)
     poly.fit(x_poly, y)
     lin2 = LinearRegression()
     lin2.fit(x_poly, y)
-    plt.plot(x, lin2.predict(poly.fit_transform(x)))
-    #plt.plot(x,y)
+    #plt.plot(x, lin2.predict(poly.fit_transform(x)))
+    plt.plot(x,y)
 
 plt.show()
 ################################angle
@@ -31,7 +31,7 @@ plt.show()
 arr=np.transpose(arr)
 
 for m in range(37):
-    for n in range(9):
+    for n in range(49):
         if ((arr[2*m][n+1])-(arr[2*m][n]))==0:
             a=90
         else:
@@ -58,6 +58,9 @@ angle = angle.astype(np.float)
 #plt.rcParams.update({'figure.figsize':(7,5), 'figure.dpi':100})
 #x = np.random.normal(size = 1000)
 
-plt.hist(angle[:,1], bins=80)
-plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
-plt.show()
+for step in range(49):
+    plt.hist(angle[:,step], bins=80, range=[-180,180])
+    plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
+    #plt.show()
+    plt.savefig('C:/Users/kedar/OneDrive - UCB-O365/Documents/Droplets/Prof. Orit/2 angle prediction/histogram/angle'+str(step+1)+'.png')
+    plt.cla()

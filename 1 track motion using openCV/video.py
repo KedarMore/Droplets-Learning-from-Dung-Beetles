@@ -52,14 +52,14 @@ for vid in range(37):
                 else:
                     centroids = [( int(round(m['m10']/m['m00'])),int(round(m['m01']/m['m00'])) )]
 
-            if skip%10==0:
+            if skip%1==0:
                 for m in moments:
                     if m['m00']==0:
                         continue
                     else:
                         #centroids = [( int(round(m['m10']/m['m00'])),int(round(m['m01']/m['m00'])) )]
                         count=count+1
-                        if count<=10:
+                        if count<=50:
                             lx.append(round(m['m10']/m['m00'],2))
                             ly.append(round(m['m01']/m['m00'],2))
 

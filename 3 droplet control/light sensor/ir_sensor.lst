@@ -1,0 +1,1801 @@
+   1               		.file	"ir_sensor.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__RAMPZ__ = 0x3b
+   6               	__CCP__ = 0x34
+   7               	__tmp_reg__ = 0
+   8               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  11               		.cfi_sections	.debug_frame
+  12               		.section	.text.irSensorInit,"ax",@progbits
+  13               	.global	irSensorInit
+  15               	irSensorInit:
+  16               	.LFB46:
+  17               		.file 1 "../src/ir_sensor.c"
+   1:../src/ir_sensor.c **** #include "ir_sensor.h"
+   2:../src/ir_sensor.c **** 
+   3:../src/ir_sensor.c **** #ifdef AUDIO_DROPLET
+   4:../src/ir_sensor.c **** 	ADC_CH_t* ir_sense_channels[6]  = {&(ADCA.CH0), &(ADCA.CH1), &(ADCA.CH2), &(ADCB.CH0), &(ADCB.CH1)
+   5:../src/ir_sensor.c **** #else
+   6:../src/ir_sensor.c **** 	const uint8_t mux_sensor_selectors[6] = {MUX_IR_SENSOR_0, MUX_IR_SENSOR_1, MUX_IR_SENSOR_2, MUX_IR
+   7:../src/ir_sensor.c **** #endif
+   8:../src/ir_sensor.c **** 
+   9:../src/ir_sensor.c **** static int16_t  ir_sense_baseline[6];
+  10:../src/ir_sensor.c **** 
+  11:../src/ir_sensor.c **** // IR sensors use ADCB channel 0, all the time
+  12:../src/ir_sensor.c **** void irSensorInit(){
+  18               		.loc 1 12 0
+  19               		.cfi_startproc
+  20               	/* prologue: function */
+  21               	/* frame size = 0 */
+  22               	/* stack size = 0 */
+  23               	.L__stack_usage = 0
+  13:../src/ir_sensor.c **** 	#ifdef AUDIO_DROPLET
+  14:../src/ir_sensor.c **** 		/* SET INPUT PINS AS INPUTS */
+  15:../src/ir_sensor.c **** 		PORTA.DIRCLR = PIN5_bm | PIN6_bm | PIN7_bm;
+  24               		.loc 1 15 0
+  25 0000 A0E0      		ldi r26,0
+  26 0002 B6E0      		ldi r27,lo8(6)
+  27 0004 80EE      		ldi r24,lo8(-32)
+  28 0006 1296      		adiw r26,2
+  29 0008 8C93      		st X,r24
+  30 000a 1297      		sbiw r26,2
+  16:../src/ir_sensor.c **** 		PORTB.DIRCLR = PIN4_bm | PIN2_bm | PIN3_bm;
+  31               		.loc 1 16 0
+  32 000c E0E2      		ldi r30,lo8(32)
+  33 000e F6E0      		ldi r31,lo8(6)
+  34 0010 9CE1      		ldi r25,lo8(28)
+  35 0012 9283      		std Z+2,r25
+  17:../src/ir_sensor.c **** 	
+  18:../src/ir_sensor.c **** 		//git 
+  19:../src/ir_sensor.c **** 		//IR SENSORS ACTING WEIRD? TRY COMMENTING OUT THE BELOW.
+  20:../src/ir_sensor.c **** 		//BELOW RECOMMENDED BY note on pg 153 of the manual
+  21:../src/ir_sensor.c **** 		//
+  22:../src/ir_sensor.c **** 		PORTA.PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  36               		.loc 1 22 0
+  37 0014 87E0      		ldi r24,lo8(7)
+  38 0016 5596      		adiw r26,21
+  39 0018 8C93      		st X,r24
+  40 001a 5597      		sbiw r26,21
+  23:../src/ir_sensor.c **** 		PORTA.PIN6CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  41               		.loc 1 23 0
+  42 001c 5696      		adiw r26,22
+  43 001e 8C93      		st X,r24
+  44 0020 5697      		sbiw r26,22
+  24:../src/ir_sensor.c **** 		PORTA.PIN7CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  45               		.loc 1 24 0
+  46 0022 5796      		adiw r26,23
+  47 0024 8C93      		st X,r24
+  25:../src/ir_sensor.c **** 		PORTB.PIN4CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  48               		.loc 1 25 0
+  49 0026 848B      		std Z+20,r24
+  26:../src/ir_sensor.c **** 		PORTB.PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  50               		.loc 1 26 0
+  51 0028 828B      		std Z+18,r24
+  27:../src/ir_sensor.c **** 		PORTB.PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  52               		.loc 1 27 0
+  53 002a 838B      		std Z+19,r24
+  28:../src/ir_sensor.c **** 	
+  29:../src/ir_sensor.c **** 		ADCA.REFCTRL = ADC_REFSEL_AREFA_gc;
+  54               		.loc 1 29 0
+  55 002c A0E0      		ldi r26,0
+  56 002e B2E0      		ldi r27,lo8(2)
+  57 0030 30E2      		ldi r19,lo8(32)
+  58 0032 1296      		adiw r26,2
+  59 0034 3C93      		st X,r19
+  60 0036 1297      		sbiw r26,2
+  30:../src/ir_sensor.c **** 		ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc | ADC_CONMODE_bm/* | ADC_FREERUN_bm*/;
+  61               		.loc 1 30 0
+  62 0038 20E1      		ldi r18,lo8(16)
+  63 003a 1196      		adiw r26,1
+  64 003c 2C93      		st X,r18
+  65 003e 1197      		sbiw r26,1
+  31:../src/ir_sensor.c **** 		ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;
+  66               		.loc 1 31 0
+  67 0040 1496      		adiw r26,4
+  68 0042 8C93      		st X,r24
+  69 0044 1497      		sbiw r26,4
+  32:../src/ir_sensor.c **** 		ADCA.CALL = PRODSIGNATURES_ADCACAL0;
+  70               		.loc 1 32 0
+  71 0046 40B5      		in r20,0x20
+  72 0048 1C96      		adiw r26,12
+  73 004a 4C93      		st X,r20
+  74 004c 1C97      		sbiw r26,12
+  33:../src/ir_sensor.c **** 		ADCA.CALH = PRODSIGNATURES_ADCACAL1;
+  75               		.loc 1 33 0
+  76 004e 41B5      		in r20,0x21
+  77 0050 1D96      		adiw r26,13
+  78 0052 4C93      		st X,r20
+  79 0054 1D97      		sbiw r26,13
+  34:../src/ir_sensor.c **** 	
+  35:../src/ir_sensor.c **** 		ADCB.REFCTRL = ADC_REFSEL_AREFA_gc;
+  80               		.loc 1 35 0
+  81 0056 E0E4      		ldi r30,lo8(64)
+  82 0058 F2E0      		ldi r31,lo8(2)
+  83 005a 3283      		std Z+2,r19
+  36:../src/ir_sensor.c **** 		ADCB.CTRLB = ADC_RESOLUTION_12BIT_gc | ADC_CONMODE_bm/* | ADC_FREERUN_bm*/; //12bit resolution, a
+  84               		.loc 1 36 0
+  85 005c 2183      		std Z+1,r18
+  37:../src/ir_sensor.c **** 		ADCB.PRESCALER = ADC_PRESCALER_DIV512_gc;
+  86               		.loc 1 37 0
+  87 005e 8483      		std Z+4,r24
+  38:../src/ir_sensor.c **** 		ADCB.CALL = PRODSIGNATURES_ADCBCAL0;
+  88               		.loc 1 38 0
+  89 0060 84B5      		in r24,0x24
+  90 0062 8487      		std Z+12,r24
+  39:../src/ir_sensor.c **** 		ADCB.CALH = PRODSIGNATURES_ADCBCAL1;
+  91               		.loc 1 39 0
+  92 0064 85B5      		in r24,0x25
+  93 0066 8587      		std Z+13,r24
+  40:../src/ir_sensor.c **** 	
+  41:../src/ir_sensor.c **** 		ADCA.CH0.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN2_bm;	// differential input. requires 
+  94               		.loc 1 41 0
+  95 0068 83E1      		ldi r24,lo8(19)
+  96 006a 9096      		adiw r26,32
+  97 006c 8C93      		st X,r24
+  98 006e 9097      		sbiw r26,32
+  42:../src/ir_sensor.c **** 		ADCA.CH0.MUXCTRL = ADC_CH_MUXNEG_INTGND_MODE4_gc | ADC_CH_MUXPOS_PIN5_gc;	// use VREF_IN for the 
+  99               		.loc 1 42 0
+ 100 0070 2CE2      		ldi r18,lo8(44)
+ 101 0072 9196      		adiw r26,33
+ 102 0074 2C93      		st X,r18
+ 103 0076 9197      		sbiw r26,33
+  43:../src/ir_sensor.c **** 		ADCA.CH1.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN2_bm;	// differential input. requires 
+ 104               		.loc 1 43 0
+ 105 0078 9896      		adiw r26,40
+ 106 007a 8C93      		st X,r24
+ 107 007c 9897      		sbiw r26,40
+  44:../src/ir_sensor.c **** 		ADCA.CH1.MUXCTRL = ADC_CH_MUXNEG_INTGND_MODE4_gc | ADC_CH_MUXPOS_PIN6_gc;	// use VREF_IN for the 
+ 108               		.loc 1 44 0
+ 109 007e 24E3      		ldi r18,lo8(52)
+ 110 0080 9996      		adiw r26,41
+ 111 0082 2C93      		st X,r18
+ 112 0084 9997      		sbiw r26,41
+  45:../src/ir_sensor.c **** 		ADCA.CH2.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN2_bm;	// differential input. requires 
+ 113               		.loc 1 45 0
+ 114 0086 D096      		adiw r26,48
+ 115 0088 8C93      		st X,r24
+ 116 008a D097      		sbiw r26,48
+  46:../src/ir_sensor.c **** 		ADCA.CH2.MUXCTRL = ADC_CH_MUXNEG_INTGND_MODE4_gc | ADC_CH_MUXPOS_PIN7_gc;	// use VREF_IN for the 
+ 117               		.loc 1 46 0
+ 118 008c 2CE3      		ldi r18,lo8(60)
+ 119 008e D196      		adiw r26,49
+ 120 0090 2C93      		st X,r18
+ 121 0092 D197      		sbiw r26,49
+  47:../src/ir_sensor.c **** 
+  48:../src/ir_sensor.c **** 		ADCB.CH0.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN2_bm;	// differential input. requires 
+ 122               		.loc 1 48 0
+ 123 0094 80A3      		std Z+32,r24
+  49:../src/ir_sensor.c **** 		ADCB.CH0.MUXCTRL = ADC_CH_MUXNEG_INTGND_MODE4_gc | ADC_CH_MUXPOS_PIN4_gc;	// use VREF_IN for the 
+ 124               		.loc 1 49 0
+ 125 0096 24E2      		ldi r18,lo8(36)
+ 126 0098 21A3      		std Z+33,r18
+  50:../src/ir_sensor.c **** 		ADCB.CH1.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN2_bm;	// differential input. requires 
+ 127               		.loc 1 50 0
+ 128 009a 80A7      		std Z+40,r24
+  51:../src/ir_sensor.c **** 		ADCB.CH1.MUXCTRL = ADC_CH_MUXNEG_INTGND_MODE4_gc | ADC_CH_MUXPOS_PIN2_gc;	// use VREF_IN for the 
+ 129               		.loc 1 51 0
+ 130 009c 24E1      		ldi r18,lo8(20)
+ 131 009e 21A7      		std Z+41,r18
+  52:../src/ir_sensor.c **** 		ADCB.CH2.CTRL =ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN2_bm;	// differential input. requires s
+ 132               		.loc 1 52 0
+ 133 00a0 80AB      		std Z+48,r24
+  53:../src/ir_sensor.c **** 		ADCB.CH2.MUXCTRL = ADC_CH_MUXNEG_INTGND_MODE4_gc | ADC_CH_MUXPOS_PIN3_gc;	// use VREF_IN for the 
+ 134               		.loc 1 53 0
+ 135 00a2 91AB      		std Z+49,r25
+  54:../src/ir_sensor.c **** 
+  55:../src/ir_sensor.c **** 
+  56:../src/ir_sensor.c **** 		ADCA.CTRLA = ADC_ENABLE_bm;
+ 136               		.loc 1 56 0
+ 137 00a4 81E0      		ldi r24,lo8(1)
+ 138 00a6 8C93      		st X,r24
+  57:../src/ir_sensor.c **** 		ADCB.CTRLA = ADC_ENABLE_bm;
+ 139               		.loc 1 57 0
+ 140 00a8 8083      		st Z,r24
+ 141               	.LVL0:
+ 142               	.LBB61:
+  58:../src/ir_sensor.c **** 		
+  59:../src/ir_sensor.c **** 		//ADCA.EVCTRL = ADC_EVSEL_1234_gc | ADC_EVACT_CH012_gc | ADC_SWEEP_012_gc;
+  60:../src/ir_sensor.c **** 		//ADCB.EVCTRL = ADC_EVSEL_567_gc | ADC_EVACT_CH012_gc | ADC_SWEEP_012_gc;
+  61:../src/ir_sensor.c **** 	#else
+  62:../src/ir_sensor.c **** 		/* SET INPUT PINS AS INPUTS */
+  63:../src/ir_sensor.c **** 		IR_SENSOR_PORT.DIRCLR = ALL_IR_SENSOR_PINS_bm;
+  64:../src/ir_sensor.c **** 		
+  65:../src/ir_sensor.c **** 		PORTB.PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  66:../src/ir_sensor.c **** 		PORTB.PIN6CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  67:../src/ir_sensor.c **** 		PORTB.PIN7CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  68:../src/ir_sensor.c **** 		PORTB.PIN4CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  69:../src/ir_sensor.c **** 		PORTB.PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  70:../src/ir_sensor.c **** 		PORTB.PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  71:../src/ir_sensor.c **** 
+  72:../src/ir_sensor.c **** 		ADCB.REFCTRL = ADC_REFSEL_AREFA_gc;
+  73:../src/ir_sensor.c **** 		ADCB.CTRLB = ADC_RESOLUTION_12BIT_gc | ADC_CONMODE_bm; //12bit resolution, and sets it to signed 
+  74:../src/ir_sensor.c **** 		ADCB.PRESCALER = ADC_PRESCALER_DIV512_gc;
+  75:../src/ir_sensor.c **** 		ADCB.CH0.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN2_bm;	// differential input. requires 
+  76:../src/ir_sensor.c **** 		ADCB.CH0.MUXCTRL = ADC_CH_MUXNEG_INTGND_MODE4_gc;	// use VREF_IN for the negative input (0.54 V)
+  77:../src/ir_sensor.c **** 		ADCB.CALL = PRODSIGNATURES_ADCBCAL0;
+  78:../src/ir_sensor.c **** 		ADCB.CALH = PRODSIGNATURES_ADCBCAL1;
+  79:../src/ir_sensor.c **** 		ADCB.CTRLA = ADC_ENABLE_bm;
+  80:../src/ir_sensor.c **** 	#endif
+  81:../src/ir_sensor.c **** 	
+  82:../src/ir_sensor.c **** 	for(uint8_t dir=0;dir<6;dir++){
+  83:../src/ir_sensor.c **** 		ir_sense_baseline[dir]=0;
+ 143               		.loc 1 83 0
+ 144 00aa E0E0      		ldi r30,lo8(ir_sense_baseline)
+ 145 00ac F0E0      		ldi r31,hi8(ir_sense_baseline)
+ 146 00ae 1082      		st Z,__zero_reg__
+ 147 00b0 1182      		std Z+1,__zero_reg__
+ 148               	.LVL1:
+ 149 00b2 1282      		std Z+2,__zero_reg__
+ 150 00b4 1382      		std Z+3,__zero_reg__
+ 151               	.LVL2:
+ 152 00b6 1482      		std Z+4,__zero_reg__
+ 153 00b8 1582      		std Z+5,__zero_reg__
+ 154               	.LVL3:
+ 155 00ba 1682      		std Z+6,__zero_reg__
+ 156 00bc 1782      		std Z+7,__zero_reg__
+ 157               	.LVL4:
+ 158 00be 1086      		std Z+8,__zero_reg__
+ 159 00c0 1186      		std Z+9,__zero_reg__
+ 160               	.LVL5:
+ 161 00c2 1286      		std Z+10,__zero_reg__
+ 162 00c4 1386      		std Z+11,__zero_reg__
+ 163               	.LVL6:
+ 164               	.LBE61:
+  84:../src/ir_sensor.c **** 	}
+  85:../src/ir_sensor.c **** 	scheduleTask(1000,initIrBaselines,NULL);
+ 165               		.loc 1 85 0
+ 166 00c6 20E0      		ldi r18,0
+ 167 00c8 30E0      		ldi r19,0
+ 168 00ca 40E0      		ldi r20,lo8(gs(initIrBaselines))
+ 169 00cc 50E0      		ldi r21,hi8(gs(initIrBaselines))
+ 170 00ce 68EE      		ldi r22,lo8(-24)
+ 171 00d0 73E0      		ldi r23,lo8(3)
+ 172 00d2 80E0      		ldi r24,0
+ 173 00d4 90E0      		ldi r25,0
+ 174 00d6 0E94 0000 		call scheduleTask
+ 175               	.LVL7:
+  86:../src/ir_sensor.c **** 	schedulePeriodicTask(5407, updateIrBaselines, NULL);
+ 176               		.loc 1 86 0
+ 177 00da 20E0      		ldi r18,0
+ 178 00dc 30E0      		ldi r19,0
+ 179 00de 40E0      		ldi r20,lo8(gs(updateIrBaselines))
+ 180 00e0 50E0      		ldi r21,hi8(gs(updateIrBaselines))
+ 181 00e2 6FE1      		ldi r22,lo8(31)
+ 182 00e4 75E1      		ldi r23,lo8(21)
+ 183 00e6 80E0      		ldi r24,0
+ 184 00e8 90E0      		ldi r25,0
+ 185 00ea 0E94 0000 		call schedulePeriodicTask
+ 186               	.LVL8:
+ 187 00ee 0895      		ret
+ 188               		.cfi_endproc
+ 189               	.LFE46:
+ 191               		.section	.text.getIrSensors,"ax",@progbits
+ 192               	.global	getIrSensors
+ 194               	getIrSensors:
+ 195               	.LFB49:
+  87:../src/ir_sensor.c **** }
+  88:../src/ir_sensor.c **** 
+  89:../src/ir_sensor.c **** void initIrBaselines(){
+  90:../src/ir_sensor.c **** 	getIrSensors(ir_sense_baseline, 13);
+  91:../src/ir_sensor.c **** }
+  92:../src/ir_sensor.c **** 
+  93:../src/ir_sensor.c **** void updateIrBaselines(){
+  94:../src/ir_sensor.c **** 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+  95:../src/ir_sensor.c **** 		if(irIsBusy(ALL_DIRS)){
+  96:../src/ir_sensor.c **** 			return;
+  97:../src/ir_sensor.c **** 		}
+  98:../src/ir_sensor.c **** 		hpIrBlock_bm=0x3F;
+  99:../src/ir_sensor.c **** 	}
+ 100:../src/ir_sensor.c **** 	int16_t prevBaselines[6];
+ 101:../src/ir_sensor.c **** 	for(uint8_t dir=0; dir<6; dir++){
+ 102:../src/ir_sensor.c **** 		prevBaselines[dir] = ir_sense_baseline[dir]; //zeroing the baseline array.
+ 103:../src/ir_sensor.c **** 		ir_sense_baseline[dir] = 0;
+ 104:../src/ir_sensor.c **** 	}
+ 105:../src/ir_sensor.c **** 	getIrSensors(ir_sense_baseline, 13);
+ 106:../src/ir_sensor.c **** 	for(uint8_t dir=0;dir<6;dir++){
+ 107:../src/ir_sensor.c **** 		ir_sense_baseline[dir] = (ir_sense_baseline[dir]+prevBaselines[dir])/2;
+ 108:../src/ir_sensor.c **** 	}
+ 109:../src/ir_sensor.c **** 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+ 110:../src/ir_sensor.c **** 		hpIrBlock_bm = 0;
+ 111:../src/ir_sensor.c **** 	}
+ 112:../src/ir_sensor.c **** }
+ 113:../src/ir_sensor.c **** 
+ 114:../src/ir_sensor.c **** void getIrSensors(int16_t* output_arr, uint8_t meas_per_ch){			
+ 196               		.loc 1 114 0
+ 197               		.cfi_startproc
+ 198               	.LVL9:
+ 199 0000 2F92      		push r2
+ 200               	.LCFI0:
+ 201               		.cfi_def_cfa_offset 4
+ 202               		.cfi_offset 2, -3
+ 203 0002 3F92      		push r3
+ 204               	.LCFI1:
+ 205               		.cfi_def_cfa_offset 5
+ 206               		.cfi_offset 3, -4
+ 207 0004 4F92      		push r4
+ 208               	.LCFI2:
+ 209               		.cfi_def_cfa_offset 6
+ 210               		.cfi_offset 4, -5
+ 211 0006 5F92      		push r5
+ 212               	.LCFI3:
+ 213               		.cfi_def_cfa_offset 7
+ 214               		.cfi_offset 5, -6
+ 215 0008 6F92      		push r6
+ 216               	.LCFI4:
+ 217               		.cfi_def_cfa_offset 8
+ 218               		.cfi_offset 6, -7
+ 219 000a 7F92      		push r7
+ 220               	.LCFI5:
+ 221               		.cfi_def_cfa_offset 9
+ 222               		.cfi_offset 7, -8
+ 223 000c 8F92      		push r8
+ 224               	.LCFI6:
+ 225               		.cfi_def_cfa_offset 10
+ 226               		.cfi_offset 8, -9
+ 227 000e 9F92      		push r9
+ 228               	.LCFI7:
+ 229               		.cfi_def_cfa_offset 11
+ 230               		.cfi_offset 9, -10
+ 231 0010 AF92      		push r10
+ 232               	.LCFI8:
+ 233               		.cfi_def_cfa_offset 12
+ 234               		.cfi_offset 10, -11
+ 235 0012 BF92      		push r11
+ 236               	.LCFI9:
+ 237               		.cfi_def_cfa_offset 13
+ 238               		.cfi_offset 11, -12
+ 239 0014 CF92      		push r12
+ 240               	.LCFI10:
+ 241               		.cfi_def_cfa_offset 14
+ 242               		.cfi_offset 12, -13
+ 243 0016 DF92      		push r13
+ 244               	.LCFI11:
+ 245               		.cfi_def_cfa_offset 15
+ 246               		.cfi_offset 13, -14
+ 247 0018 EF92      		push r14
+ 248               	.LCFI12:
+ 249               		.cfi_def_cfa_offset 16
+ 250               		.cfi_offset 14, -15
+ 251 001a FF92      		push r15
+ 252               	.LCFI13:
+ 253               		.cfi_def_cfa_offset 17
+ 254               		.cfi_offset 15, -16
+ 255 001c 0F93      		push r16
+ 256               	.LCFI14:
+ 257               		.cfi_def_cfa_offset 18
+ 258               		.cfi_offset 16, -17
+ 259 001e 1F93      		push r17
+ 260               	.LCFI15:
+ 261               		.cfi_def_cfa_offset 19
+ 262               		.cfi_offset 17, -18
+ 263 0020 CF93      		push r28
+ 264               	.LCFI16:
+ 265               		.cfi_def_cfa_offset 20
+ 266               		.cfi_offset 28, -19
+ 267 0022 DF93      		push r29
+ 268               	.LCFI17:
+ 269               		.cfi_def_cfa_offset 21
+ 270               		.cfi_offset 29, -20
+ 271 0024 CDB7      		in r28,__SP_L__
+ 272 0026 DEB7      		in r29,__SP_H__
+ 273               	.LCFI18:
+ 274               		.cfi_def_cfa_register 28
+ 275               	/* prologue: function */
+ 276               	/* frame size = 0 */
+ 277               	/* stack size = 18 */
+ 278               	.L__stack_usage = 18
+ 279 0028 6C01      		movw r12,r24
+ 280 002a 562E      		mov r5,r22
+ 115:../src/ir_sensor.c **** 	int16_t meas[6][meas_per_ch];	
+ 116:../src/ir_sensor.c **** 	#ifdef AUDIO_DROPLET
+ 117:../src/ir_sensor.c **** 		for(uint8_t meas_count=0;meas_count<meas_per_ch;meas_count++){
+ 118:../src/ir_sensor.c **** 			for(uint8_t dir=0;dir<6;dir++){	
+ 119:../src/ir_sensor.c **** 				ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+ 120:../src/ir_sensor.c **** 					ir_sense_channels[dir]->CTRL |= ADC_CH_START_bm;
+ 121:../src/ir_sensor.c **** 					while(ir_sense_channels[dir]->INTFLAGS==0);
+ 122:../src/ir_sensor.c **** 					meas[dir][meas_count] = (ir_sense_channels[dir]->RES);
+ 123:../src/ir_sensor.c **** 					ir_sense_channels[dir]->INTFLAGS=1;
+ 124:../src/ir_sensor.c **** 				}
+ 125:../src/ir_sensor.c **** 			}
+ 126:../src/ir_sensor.c **** 		}
+ 127:../src/ir_sensor.c **** 	#else
+ 128:../src/ir_sensor.c **** 		for(uint8_t dir=0;dir<6;dir++){
+ 129:../src/ir_sensor.c **** 			ADCB.CH0.MUXCTRL &= MUX_SENSOR_CLR; //clear previous sensor selection
+ 130:../src/ir_sensor.c **** 			ADCB.CH0.MUXCTRL |= mux_sensor_selectors[dir];			
+ 131:../src/ir_sensor.c **** 			for(uint8_t meas_count=0; meas_count<meas_per_ch; meas_count++){
+ 132:../src/ir_sensor.c **** 				ATOMIC_BLOCK(ATOMIC_RESTORESTATE){		
+ 133:../src/ir_sensor.c **** 					ADCB.CH0.CTRL |= ADC_CH_START_bm;
+ 134:../src/ir_sensor.c **** 					while (ADCB.CH0.INTFLAGS==0){};		// wait for measurement to complete
+ 135:../src/ir_sensor.c **** 					meas[dir][meas_count] = ADCB.CH0RES;
+ 136:../src/ir_sensor.c **** 					ADCB.CH0.INTFLAGS=1; // clear the complete flag					
+ 137:../src/ir_sensor.c **** 				}
+ 138:../src/ir_sensor.c **** 			}			
+ 139:../src/ir_sensor.c **** 		}
+ 140:../src/ir_sensor.c **** 	#endif	
+ 141:../src/ir_sensor.c **** 	
+ 142:../src/ir_sensor.c **** 	
+ 143:../src/ir_sensor.c **** 	for(uint8_t dir=0;dir<6;dir++){
+ 144:../src/ir_sensor.c **** 		if(meas_per_ch>2){
+ 145:../src/ir_sensor.c **** 			int16_t median = measFindMedian(&(meas[dir][2]),meas_per_ch-2);
+ 146:../src/ir_sensor.c **** 			//printf("%d ",median);
+ 147:../src/ir_sensor.c **** 			output_arr[dir] = median-ir_sense_baseline[dir];
+ 148:../src/ir_sensor.c **** 		}			
+ 149:../src/ir_sensor.c **** 		else if(meas_per_ch==2)
+ 150:../src/ir_sensor.c **** 			output_arr[dir] = measFindMedian(&(meas[dir][1]),meas_per_ch-1)-ir_sense_baseline[dir];
+ 151:../src/ir_sensor.c **** 		else
+ 152:../src/ir_sensor.c **** 			output_arr[dir] = meas[dir][0];
+ 153:../src/ir_sensor.c **** 	}
+ 154:../src/ir_sensor.c **** 	//for(uint8_t i=0;i<6;i++) printf("%d ", output_arr[i]);
+ 155:../src/ir_sensor.c **** 	//printf("\r\n");	
+ 156:../src/ir_sensor.c **** }
+ 281               		.loc 1 156 0
+ 282 002c 2DB6      		in r2,__SP_L__
+ 283 002e 3EB6      		in r3,__SP_H__
+ 284               	.LVL10:
+ 115:../src/ir_sensor.c **** 	int16_t meas[6][meas_per_ch];	
+ 285               		.loc 1 115 0
+ 286 0030 062F      		mov r16,r22
+ 287 0032 10E0      		ldi r17,0
+ 288 0034 000F      		lsl r16
+ 289 0036 111F      		rol r17
+ 290 0038 8DB7      		in r24,__SP_L__
+ 291 003a 9EB7      		in r25,__SP_H__
+ 292               	.LVL11:
+ 293 003c ACE0      		ldi r26,lo8(12)
+ 294 003e 6A9F      		mul r22,r26
+ 295 0040 8019      		sub r24,r0
+ 296 0042 9109      		sbc r25,r1
+ 297 0044 1124      		clr __zero_reg__
+ 298 0046 8DBF      		out __SP_L__,r24
+ 299 0048 9EBF      		out __SP_H__,r25
+ 300 004a EDB7      		in r30,__SP_L__
+ 301 004c FEB7      		in r31,__SP_H__
+ 302 004e 3196      		adiw r30,1
+ 303 0050 4F01      		movw r8,r30
+ 304               	.LVL12:
+ 305               	.LBB62:
+ 117:../src/ir_sensor.c **** 			for(uint8_t dir=0;dir<6;dir++){	
+ 306               		.loc 1 117 0
+ 307 0052 6623      		tst r22
+ 308 0054 01F0      		breq .L8
+ 309 0056 E12C      		mov r14,__zero_reg__
+ 310 0058 F12C      		mov r15,__zero_reg__
+ 311               	.LBB63:
+ 312               	.LBB64:
+ 123:../src/ir_sensor.c **** 				}
+ 313               		.loc 1 123 0
+ 314 005a AA24      		clr r10
+ 315 005c A394      		inc r10
+ 316               	.LVL13:
+ 317               	.L7:
+ 318 005e 20E0      		ldi r18,lo8(ir_sense_channels)
+ 319 0060 30E0      		ldi r19,hi8(ir_sense_channels)
+ 320               	.LBE64:
+ 321               	.LBE63:
+ 117:../src/ir_sensor.c **** 			for(uint8_t dir=0;dir<6;dir++){	
+ 322               		.loc 1 117 0
+ 323 0062 80E0      		ldi r24,0
+ 324 0064 90E0      		ldi r25,0
+ 325 0066 B701      		movw r22,r14
+ 326 0068 660F      		lsl r22
+ 327 006a 771F      		rol r23
+ 328               	.LBB70:
+ 329               	.LBB69:
+ 122:../src/ir_sensor.c **** 					ir_sense_channels[dir]->INTFLAGS=1;
+ 330               		.loc 1 122 0
+ 331 006c 680D      		add r22,r8
+ 332 006e 791D      		adc r23,r9
+ 333               	.L6:
+ 334               	.LVL14:
+ 119:../src/ir_sensor.c **** 					ir_sense_channels[dir]->CTRL |= ADC_CH_START_bm;
+ 335               		.loc 1 119 0
+ 336 0070 BFB6      		in r11,__SREG__
+ 337               	.LVL15:
+ 338               	.LBB65:
+ 339               	.LBB66:
+ 340               		.file 2 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+   1:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** /* Copyright (c) 2007 Dean Camera
+   2:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    All rights reserved.
+   3:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+   4:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    Redistribution and use in source and binary forms, with or without
+   5:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    modification, are permitted provided that the following conditions are met:
+   6:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+   7:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    * Redistributions of source code must retain the above copyright
+   8:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      notice, this list of conditions and the following disclaimer.
+   9:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  10:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    * Redistributions in binary form must reproduce the above copyright
+  11:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      notice, this list of conditions and the following disclaimer in
+  12:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      the documentation and/or other materials provided with the
+  13:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      distribution.
+  14:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  15:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    * Neither the name of the copyright holders nor the names of
+  16:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      contributors may be used to endorse or promote products derived
+  17:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      from this software without specific prior written permission.
+  18:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  19:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  20:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  21:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  22:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  23:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  24:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  25:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  26:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  27:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  28:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  29:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   POSSIBILITY OF SUCH DAMAGE.
+  30:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** */
+  31:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  32:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** /* $Id$ */
+  33:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  34:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #ifndef _UTIL_ATOMIC_H_
+  35:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #define _UTIL_ATOMIC_H_ 1
+  36:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  37:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #include <avr/io.h>
+  38:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #include <avr/interrupt.h>
+  39:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  40:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #if !defined(__DOXYGEN__)
+  41:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** /* Internal helper functions. */
+  42:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ uint8_t __iSeiRetVal(void)
+  43:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  44:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     sei();
+  45:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     return 1;
+  46:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  47:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  48:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ uint8_t __iCliRetVal(void)
+  49:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  50:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     cli();
+ 341               		.loc 2 50 0
+ 342               	/* #APP */
+ 343               	 ;  50 "c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\
+ 344 0072 F894      		cli
+ 345               	 ;  0 "" 2
+ 346               	.LVL16:
+ 347               	/* #NOAPP */
+ 348               	.LBE66:
+ 349               	.LBE65:
+ 120:../src/ir_sensor.c **** 					while(ir_sense_channels[dir]->INTFLAGS==0);
+ 350               		.loc 1 120 0
+ 351 0074 D901      		movw r26,r18
+ 352 0076 ED91      		ld r30,X+
+ 353 0078 FD91      		ld r31,X+
+ 354 007a 9D01      		movw r18,r26
+ 355 007c 4081      		ld r20,Z
+ 356 007e 4068      		ori r20,lo8(-128)
+ 357 0080 4083      		st Z,r20
+ 358               	.L5:
+ 121:../src/ir_sensor.c **** 					meas[dir][meas_count] = (ir_sense_channels[dir]->RES);
+ 359               		.loc 1 121 0 discriminator 1
+ 360 0082 4381      		ldd r20,Z+3
+ 361 0084 4423      		tst r20
+ 362 0086 01F0      		breq .L5
+ 122:../src/ir_sensor.c **** 					ir_sense_channels[dir]->INTFLAGS=1;
+ 363               		.loc 1 122 0 discriminator 2
+ 364 0088 4481      		ldd r20,Z+4
+ 365 008a 5581      		ldd r21,Z+5
+ 366 008c 089F      		mul r16,r24
+ 367 008e D001      		movw r26,r0
+ 368 0090 099F      		mul r16,r25
+ 369 0092 B00D      		add r27,r0
+ 370 0094 189F      		mul r17,r24
+ 371 0096 B00D      		add r27,r0
+ 372 0098 1124      		clr r1
+ 373 009a A60F      		add r26,r22
+ 374 009c B71F      		adc r27,r23
+ 375 009e 4D93      		st X+,r20
+ 376 00a0 5C93      		st X,r21
+ 123:../src/ir_sensor.c **** 				}
+ 377               		.loc 1 123 0 discriminator 2
+ 378 00a2 A382      		std Z+3,r10
+ 379               	.LVL17:
+ 380               	.LBB67:
+ 381               	.LBB68:
+  51:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     return 1;
+  52:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  53:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  54:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ void __iSeiParam(const uint8_t *__s)
+  55:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  56:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     sei();
+  57:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+  58:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     (void)__s;
+  59:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  60:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  61:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ void __iCliParam(const uint8_t *__s)
+  62:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  63:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     cli();
+  64:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+  65:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     (void)__s;
+  66:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  67:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  68:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ void __iRestore(const  uint8_t *__s)
+  69:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     SREG = *__s;
+ 382               		.loc 2 70 0 discriminator 2
+ 383 00a4 BFBE      		out __SREG__,r11
+  71:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+ 384               		.loc 2 71 0 discriminator 2
+ 385               	.LVL18:
+ 386 00a6 0196      		adiw r24,1
+ 387               	.LVL19:
+ 388               	.LBE68:
+ 389               	.LBE67:
+ 390               	.LBE69:
+ 118:../src/ir_sensor.c **** 				ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+ 391               		.loc 1 118 0 discriminator 2
+ 392 00a8 8630      		cpi r24,6
+ 393 00aa 9105      		cpc r25,__zero_reg__
+ 394 00ac 01F4      		brne .L6
+ 395               	.LVL20:
+ 396 00ae BFEF      		ldi r27,-1
+ 397 00b0 EB1A      		sub r14,r27
+ 398 00b2 FB0A      		sbc r15,r27
+ 399               	.LVL21:
+ 400               	.LBE70:
+ 117:../src/ir_sensor.c **** 			for(uint8_t dir=0;dir<6;dir++){	
+ 401               		.loc 1 117 0 discriminator 2
+ 402 00b4 E514      		cp r14,r5
+ 403 00b6 00F0      		brlo .L7
+ 404               	.LVL22:
+ 405               	.L8:
+ 406 00b8 5401      		movw r10,r8
+ 407 00ba F4E0      		ldi r31,4
+ 408 00bc AF0E      		add r10,r31
+ 409 00be B11C      		adc r11,__zero_reg__
+ 410 00c0 50E0      		ldi r21,lo8(ir_sense_baseline)
+ 411 00c2 652E      		mov r6,r21
+ 412 00c4 50E0      		ldi r21,hi8(ir_sense_baseline)
+ 413 00c6 752E      		mov r7,r21
+ 414 00c8 7601      		movw r14,r12
+ 117:../src/ir_sensor.c **** 			for(uint8_t dir=0;dir<6;dir++){	
+ 415               		.loc 1 117 0 is_stmt 0
+ 416 00ca C12C      		mov r12,__zero_reg__
+ 417 00cc D12C      		mov r13,__zero_reg__
+ 418               	.LVL23:
+ 419               	.LBE62:
+ 420               	.LBB71:
+ 421               	.LBB72:
+ 145:../src/ir_sensor.c **** 			//printf("%d ",median);
+ 422               		.loc 1 145 0 is_stmt 1
+ 423 00ce 6EEF      		ldi r22,lo8(-2)
+ 424 00d0 462E      		mov r4,r22
+ 425 00d2 450C      		add r4,r5
+ 426 00d4 00C0      		rjmp .L4
+ 427               	.LVL24:
+ 428               	.L9:
+ 429               	.LBE72:
+ 149:../src/ir_sensor.c **** 			output_arr[dir] = measFindMedian(&(meas[dir][1]),meas_per_ch-1)-ir_sense_baseline[dir];
+ 430               		.loc 1 149 0
+ 431 00d6 F2E0      		ldi r31,lo8(2)
+ 432 00d8 5F16      		cp r5,r31
+ 433 00da 01F4      		brne .+2
+ 434 00dc 00C0      		rjmp .L19
+ 152:../src/ir_sensor.c **** 	}
+ 435               		.loc 1 152 0
+ 436 00de 0C9D      		mul r16,r12
+ 437 00e0 F001      		movw r30,r0
+ 438 00e2 0D9D      		mul r16,r13
+ 439 00e4 F00D      		add r31,r0
+ 440 00e6 1C9D      		mul r17,r12
+ 441 00e8 F00D      		add r31,r0
+ 442 00ea 1124      		clr r1
+ 443 00ec E80D      		add r30,r8
+ 444 00ee F91D      		adc r31,r9
+ 445 00f0 8081      		ld r24,Z
+ 446 00f2 9181      		ldd r25,Z+1
+ 447 00f4 D701      		movw r26,r14
+ 448 00f6 8D93      		st X+,r24
+ 449 00f8 9C93      		st X,r25
+ 450               	.LVL25:
+ 451               	.L10:
+ 452 00fa BFEF      		ldi r27,-1
+ 453 00fc CB1A      		sub r12,r27
+ 454 00fe DB0A      		sbc r13,r27
+ 455               	.LVL26:
+ 456 0100 A00E      		add r10,r16
+ 457 0102 B11E      		adc r11,r17
+ 458 0104 E2E0      		ldi r30,2
+ 459 0106 6E0E      		add r6,r30
+ 460 0108 711C      		adc r7,__zero_reg__
+ 461 010a F2E0      		ldi r31,2
+ 462 010c EF0E      		add r14,r31
+ 463 010e F11C      		adc r15,__zero_reg__
+ 143:../src/ir_sensor.c **** 		if(meas_per_ch>2){
+ 464               		.loc 1 143 0 discriminator 2
+ 465 0110 26E0      		ldi r18,6
+ 466 0112 C216      		cp r12,r18
+ 467 0114 D104      		cpc r13,__zero_reg__
+ 468 0116 01F0      		breq .L20
+ 469               	.LVL27:
+ 470               	.L4:
+ 144:../src/ir_sensor.c **** 			int16_t median = measFindMedian(&(meas[dir][2]),meas_per_ch-2);
+ 471               		.loc 1 144 0
+ 472 0118 E2E0      		ldi r30,lo8(2)
+ 473 011a E515      		cp r30,r5
+ 474 011c 00F4      		brsh .L9
+ 475               	.LBB73:
+ 145:../src/ir_sensor.c **** 			//printf("%d ",median);
+ 476               		.loc 1 145 0
+ 477 011e 642D      		mov r22,r4
+ 478 0120 C501      		movw r24,r10
+ 479               	.LVL28:
+ 480               	.L17:
+ 481               	.LBE73:
+ 150:../src/ir_sensor.c **** 		else
+ 482               		.loc 1 150 0
+ 483 0122 0E94 0000 		call measFindMedian
+ 484               	.LVL29:
+ 485 0126 D301      		movw r26,r6
+ 486 0128 2D91      		ld r18,X+
+ 487 012a 3C91      		ld r19,X
+ 488 012c 821B      		sub r24,r18
+ 489 012e 930B      		sbc r25,r19
+ 490 0130 F701      		movw r30,r14
+ 491 0132 8083      		st Z,r24
+ 492 0134 9183      		std Z+1,r25
+ 493 0136 00C0      		rjmp .L10
+ 494               	.LVL30:
+ 495               	.L20:
+ 496               	.LBE71:
+ 497               		.loc 1 156 0
+ 498 0138 2DBE      		out __SP_L__,r2
+ 499 013a 3EBE      		out __SP_H__,r3
+ 500               	/* epilogue start */
+ 501 013c DF91      		pop r29
+ 502 013e CF91      		pop r28
+ 503 0140 1F91      		pop r17
+ 504 0142 0F91      		pop r16
+ 505 0144 FF90      		pop r15
+ 506 0146 EF90      		pop r14
+ 507 0148 DF90      		pop r13
+ 508 014a CF90      		pop r12
+ 509               	.LVL31:
+ 510 014c BF90      		pop r11
+ 511 014e AF90      		pop r10
+ 512 0150 9F90      		pop r9
+ 513 0152 8F90      		pop r8
+ 514               	.LVL32:
+ 515 0154 7F90      		pop r7
+ 516 0156 6F90      		pop r6
+ 517 0158 5F90      		pop r5
+ 518               	.LVL33:
+ 519 015a 4F90      		pop r4
+ 520 015c 3F90      		pop r3
+ 521 015e 2F90      		pop r2
+ 522               	.LVL34:
+ 523 0160 0895      		ret
+ 524               	.LVL35:
+ 525               	.L19:
+ 526               	.LBB74:
+ 150:../src/ir_sensor.c **** 		else
+ 527               		.loc 1 150 0
+ 528 0162 61E0      		ldi r22,lo8(1)
+ 529 0164 C501      		movw r24,r10
+ 530 0166 0297      		sbiw r24,2
+ 531 0168 00C0      		rjmp .L17
+ 532               	.LBE74:
+ 533               		.cfi_endproc
+ 534               	.LFE49:
+ 536               		.section	.text.initIrBaselines,"ax",@progbits
+ 537               	.global	initIrBaselines
+ 539               	initIrBaselines:
+ 540               	.LFB47:
+  89:../src/ir_sensor.c **** 	getIrSensors(ir_sense_baseline, 13);
+ 541               		.loc 1 89 0
+ 542               		.cfi_startproc
+ 543               	/* prologue: function */
+ 544               	/* frame size = 0 */
+ 545               	/* stack size = 0 */
+ 546               	.L__stack_usage = 0
+  90:../src/ir_sensor.c **** }
+ 547               		.loc 1 90 0
+ 548 0000 6DE0      		ldi r22,lo8(13)
+ 549 0002 80E0      		ldi r24,lo8(ir_sense_baseline)
+ 550 0004 90E0      		ldi r25,hi8(ir_sense_baseline)
+ 551 0006 0C94 0000 		jmp getIrSensors
+ 552               	.LVL36:
+ 553               		.cfi_endproc
+ 554               	.LFE47:
+ 556               		.section	.text.updateIrBaselines,"ax",@progbits
+ 557               	.global	updateIrBaselines
+ 559               	updateIrBaselines:
+ 560               	.LFB48:
+  93:../src/ir_sensor.c **** 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+ 561               		.loc 1 93 0
+ 562               		.cfi_startproc
+ 563 0000 EF92      		push r14
+ 564               	.LCFI19:
+ 565               		.cfi_def_cfa_offset 4
+ 566               		.cfi_offset 14, -3
+ 567 0002 FF92      		push r15
+ 568               	.LCFI20:
+ 569               		.cfi_def_cfa_offset 5
+ 570               		.cfi_offset 15, -4
+ 571 0004 0F93      		push r16
+ 572               	.LCFI21:
+ 573               		.cfi_def_cfa_offset 6
+ 574               		.cfi_offset 16, -5
+ 575 0006 1F93      		push r17
+ 576               	.LCFI22:
+ 577               		.cfi_def_cfa_offset 7
+ 578               		.cfi_offset 17, -6
+ 579 0008 CF93      		push r28
+ 580               	.LCFI23:
+ 581               		.cfi_def_cfa_offset 8
+ 582               		.cfi_offset 28, -7
+ 583 000a DF93      		push r29
+ 584               	.LCFI24:
+ 585               		.cfi_def_cfa_offset 9
+ 586               		.cfi_offset 29, -8
+ 587 000c CDB7      		in r28,__SP_L__
+ 588 000e DEB7      		in r29,__SP_H__
+ 589               	.LCFI25:
+ 590               		.cfi_def_cfa_register 28
+ 591 0010 2C97      		sbiw r28,12
+ 592               	.LCFI26:
+ 593               		.cfi_def_cfa_offset 21
+ 594 0012 CDBF      		out __SP_L__,r28
+ 595 0014 DEBF      		out __SP_H__,r29
+ 596               	/* prologue: function */
+ 597               	/* frame size = 12 */
+ 598               	/* stack size = 18 */
+ 599               	.L__stack_usage = 18
+ 600               	.LBB100:
+  94:../src/ir_sensor.c **** 		if(irIsBusy(ALL_DIRS)){
+ 601               		.loc 1 94 0
+ 602 0016 1FB7      		in r17,__SREG__
+ 603               	.LVL37:
+ 604               	.LBB101:
+ 605               	.LBB102:
+  50:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     return 1;
+ 606               		.loc 2 50 0
+ 607               	/* #APP */
+ 608               	 ;  50 "c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\
+ 609 0018 F894      		cli
+ 610               	 ;  0 "" 2
+ 611               	.LVL38:
+ 612               	/* #NOAPP */
+ 613               	.LBE102:
+ 614               	.LBE101:
+  95:../src/ir_sensor.c **** 			return;
+ 615               		.loc 1 95 0
+ 616 001a 8FE3      		ldi r24,lo8(63)
+ 617 001c 0E94 0000 		call irIsBusy
+ 618               	.LVL39:
+ 619 0020 8111      		cpse r24,__zero_reg__
+ 620 0022 00C0      		rjmp .L23
+  98:../src/ir_sensor.c **** 	}
+ 621               		.loc 1 98 0 discriminator 2
+ 622 0024 8FE3      		ldi r24,lo8(63)
+ 623 0026 8093 0000 		sts hpIrBlock_bm,r24
+ 624               	.LVL40:
+ 625               	.LBB103:
+ 626               	.LBB104:
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+ 627               		.loc 2 70 0 discriminator 2
+ 628 002a 1FBF      		out __SREG__,r17
+ 629               		.loc 2 71 0 discriminator 2
+ 630               	.LVL41:
+ 631 002c 8E01      		movw r16,r28
+ 632 002e 0F5F      		subi r16,-1
+ 633 0030 1F4F      		sbci r17,-1
+ 634 0032 30E0      		ldi r19,lo8(ir_sense_baseline)
+ 635 0034 E32E      		mov r14,r19
+ 636 0036 30E0      		ldi r19,hi8(ir_sense_baseline)
+ 637 0038 F32E      		mov r15,r19
+ 638 003a F701      		movw r30,r14
+ 639 003c D801      		movw r26,r16
+ 640               	.LVL42:
+ 641               	.L24:
+ 642               	.LBE104:
+ 643               	.LBE103:
+ 644               	.LBE100:
+ 645               	.LBB107:
+ 102:../src/ir_sensor.c **** 		ir_sense_baseline[dir] = 0;
+ 646               		.loc 1 102 0 discriminator 3
+ 647 003e 8081      		ld r24,Z
+ 648 0040 9181      		ldd r25,Z+1
+ 649 0042 8D93      		st X+,r24
+ 650 0044 9D93      		st X+,r25
+ 103:../src/ir_sensor.c **** 	}
+ 651               		.loc 1 103 0 discriminator 3
+ 652 0046 1192      		st Z+,__zero_reg__
+ 653 0048 1192      		st Z+,__zero_reg__
+ 101:../src/ir_sensor.c **** 		prevBaselines[dir] = ir_sense_baseline[dir]; //zeroing the baseline array.
+ 654               		.loc 1 101 0 discriminator 3
+ 655 004a 80E0      		ldi r24,hi8(ir_sense_baseline+12)
+ 656 004c E030      		cpi r30,lo8(ir_sense_baseline+12)
+ 657 004e F807      		cpc r31,r24
+ 658 0050 01F4      		brne .L24
+ 659               	.LBE107:
+ 105:../src/ir_sensor.c **** 	for(uint8_t dir=0;dir<6;dir++){
+ 660               		.loc 1 105 0
+ 661 0052 6DE0      		ldi r22,lo8(13)
+ 662 0054 80E0      		ldi r24,lo8(ir_sense_baseline)
+ 663 0056 90E0      		ldi r25,hi8(ir_sense_baseline)
+ 664 0058 0E94 0000 		call getIrSensors
+ 665               	.LVL43:
+ 666 005c 00C0      		rjmp .L27
+ 667               	.LVL44:
+ 668               	.L26:
+ 669               	.LBB108:
+ 107:../src/ir_sensor.c **** 	}
+ 670               		.loc 1 107 0 discriminator 3
+ 671 005e 9595      		asr r25
+ 672 0060 8795      		ror r24
+ 673 0062 F701      		movw r30,r14
+ 674 0064 8193      		st Z+,r24
+ 675 0066 9193      		st Z+,r25
+ 676 0068 7F01      		movw r14,r30
+ 106:../src/ir_sensor.c **** 		ir_sense_baseline[dir] = (ir_sense_baseline[dir]+prevBaselines[dir])/2;
+ 677               		.loc 1 106 0 discriminator 3
+ 678 006a F0E0      		ldi r31,lo8(ir_sense_baseline+12)
+ 679 006c EF16      		cp r14,r31
+ 680 006e F0E0      		ldi r31,hi8(ir_sense_baseline+12)
+ 681 0070 FF06      		cpc r15,r31
+ 682 0072 01F0      		breq .L30
+ 683               	.L27:
+ 107:../src/ir_sensor.c **** 	}
+ 684               		.loc 1 107 0 discriminator 3
+ 685 0074 F801      		movw r30,r16
+ 686 0076 2191      		ld r18,Z+
+ 687 0078 3191      		ld r19,Z+
+ 688 007a 8F01      		movw r16,r30
+ 689 007c F701      		movw r30,r14
+ 690 007e 8081      		ld r24,Z
+ 691 0080 9181      		ldd r25,Z+1
+ 692 0082 820F      		add r24,r18
+ 693 0084 931F      		adc r25,r19
+ 694 0086 97FF      		sbrs r25,7
+ 695 0088 00C0      		rjmp .L26
+ 696 008a 0196      		adiw r24,1
+ 697 008c 00C0      		rjmp .L26
+ 698               	.LVL45:
+ 699               	.L23:
+ 700               	.LBE108:
+ 701               	.LBB109:
+ 702               	.LBB105:
+ 703               	.LBB106:
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+ 704               		.loc 2 70 0
+ 705 008e 1FBF      		out __SREG__,r17
+ 706               		.loc 2 71 0
+ 707               	.LVL46:
+ 708               	.L22:
+ 709               	/* epilogue start */
+ 710               	.LBE106:
+ 711               	.LBE105:
+ 712               	.LBE109:
+ 112:../src/ir_sensor.c **** 
+ 713               		.loc 1 112 0
+ 714 0090 2C96      		adiw r28,12
+ 715 0092 CDBF      		out __SP_L__,r28
+ 716 0094 DEBF      		out __SP_H__,r29
+ 717 0096 DF91      		pop r29
+ 718 0098 CF91      		pop r28
+ 719 009a 1F91      		pop r17
+ 720 009c 0F91      		pop r16
+ 721 009e FF90      		pop r15
+ 722 00a0 EF90      		pop r14
+ 723 00a2 0895      		ret
+ 724               	.LVL47:
+ 725               	.L30:
+ 726               	.LBB110:
+ 727               	.LBB111:
+ 109:../src/ir_sensor.c **** 		hpIrBlock_bm = 0;
+ 728               		.loc 1 109 0
+ 729 00a4 8FB7      		in r24,__SREG__
+ 730               	.LVL48:
+ 731               	.LBB112:
+ 732               	.LBB113:
+  50:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     return 1;
+ 733               		.loc 2 50 0
+ 734               	/* #APP */
+ 735               	 ;  50 "c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\
+ 736 00a6 F894      		cli
+ 737               	 ;  0 "" 2
+ 738               	.LVL49:
+ 739               	/* #NOAPP */
+ 740               	.LBE113:
+ 741               	.LBE112:
+ 110:../src/ir_sensor.c **** 	}
+ 742               		.loc 1 110 0
+ 743 00a8 1092 0000 		sts hpIrBlock_bm,__zero_reg__
+ 744               	.LVL50:
+ 745               	.LBB114:
+ 746               	.LBB115:
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+ 747               		.loc 2 70 0
+ 748 00ac 8FBF      		out __SREG__,r24
+ 749               		.loc 2 71 0
+ 750               	.LVL51:
+ 751 00ae 00C0      		rjmp .L22
+ 752               	.LBE115:
+ 753               	.LBE114:
+ 754               	.LBE111:
+ 755               	.LBE110:
+ 756               		.cfi_endproc
+ 757               	.LFE48:
+ 759               		.section	.text.checkCollisionValues,"ax",@progbits
+ 760               	.global	checkCollisionValues
+ 762               	checkCollisionValues:
+ 763               	.LFB51:
+ 157:../src/ir_sensor.c **** 
+ 158:../src/ir_sensor.c **** uint8_t checkCollisions(){
+ 159:../src/ir_sensor.c **** 	int16_t meas[6];
+ 160:../src/ir_sensor.c **** 	uint8_t dirs = 0;
+ 161:../src/ir_sensor.c **** 	checkCollisionValues(meas);
+ 162:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++){
+ 163:../src/ir_sensor.c **** 		dirs |=  (((meas[i]+ir_sense_baseline[i])>=IR_SENSE_MAX)<<i);
+ 164:../src/ir_sensor.c **** 	}
+ 165:../src/ir_sensor.c **** 	return dirs;
+ 166:../src/ir_sensor.c **** }
+ 167:../src/ir_sensor.c **** 
+ 168:../src/ir_sensor.c **** void checkCollisionValues(int16_t meas[6]){
+ 764               		.loc 1 168 0
+ 765               		.cfi_startproc
+ 766               	.LVL52:
+ 767 0000 BF92      		push r11
+ 768               	.LCFI27:
+ 769               		.cfi_def_cfa_offset 4
+ 770               		.cfi_offset 11, -3
+ 771 0002 CF92      		push r12
+ 772               	.LCFI28:
+ 773               		.cfi_def_cfa_offset 5
+ 774               		.cfi_offset 12, -4
+ 775 0004 DF92      		push r13
+ 776               	.LCFI29:
+ 777               		.cfi_def_cfa_offset 6
+ 778               		.cfi_offset 13, -5
+ 779 0006 EF92      		push r14
+ 780               	.LCFI30:
+ 781               		.cfi_def_cfa_offset 7
+ 782               		.cfi_offset 14, -6
+ 783 0008 FF92      		push r15
+ 784               	.LCFI31:
+ 785               		.cfi_def_cfa_offset 8
+ 786               		.cfi_offset 15, -7
+ 787 000a 0F93      		push r16
+ 788               	.LCFI32:
+ 789               		.cfi_def_cfa_offset 9
+ 790               		.cfi_offset 16, -8
+ 791 000c 1F93      		push r17
+ 792               	.LCFI33:
+ 793               		.cfi_def_cfa_offset 10
+ 794               		.cfi_offset 17, -9
+ 795 000e CF93      		push r28
+ 796               	.LCFI34:
+ 797               		.cfi_def_cfa_offset 11
+ 798               		.cfi_offset 28, -10
+ 799 0010 DF93      		push r29
+ 800               	.LCFI35:
+ 801               		.cfi_def_cfa_offset 12
+ 802               		.cfi_offset 29, -11
+ 803 0012 CDB7      		in r28,__SP_L__
+ 804 0014 DEB7      		in r29,__SP_H__
+ 805               	.LCFI36:
+ 806               		.cfi_def_cfa_register 28
+ 807 0016 6897      		sbiw r28,24
+ 808               	.LCFI37:
+ 809               		.cfi_def_cfa_offset 36
+ 810 0018 CDBF      		out __SP_L__,r28
+ 811 001a DEBF      		out __SP_H__,r29
+ 812               	/* prologue: function */
+ 813               	/* frame size = 24 */
+ 814               	/* stack size = 33 */
+ 815               	.L__stack_usage = 33
+ 816 001c B82E      		mov r11,r24
+ 817 001e 092F      		mov r16,r25
+ 169:../src/ir_sensor.c **** 	int16_t baseline_meas[6];
+ 170:../src/ir_sensor.c **** 	int16_t measured_vals[6];
+ 171:../src/ir_sensor.c **** 	//uint8_t dirs=0;
+ 172:../src/ir_sensor.c **** 	if(irIsBusy(ALL_DIRS)){
+ 818               		.loc 1 172 0
+ 819 0020 8FE3      		ldi r24,lo8(63)
+ 820               	.LVL53:
+ 821 0022 0E94 0000 		call irIsBusy
+ 822               	.LVL54:
+ 823 0026 8111      		cpse r24,__zero_reg__
+ 824 0028 00C0      		rjmp .L40
+ 825               	.LVL55:
+ 826               	.LBB116:
+ 173:../src/ir_sensor.c **** 		printf_P(PSTR("IR Hardware busy. Can't check collisions.\r\n"));
+ 174:../src/ir_sensor.c **** 		return;
+ 175:../src/ir_sensor.c **** 	}
+ 176:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++) ir_rxtx[i].status = IR_STATUS_BUSY_bm;	
+ 827               		.loc 1 176 0
+ 828 002a 81E0      		ldi r24,lo8(1)
+ 829 002c 8093 0000 		sts ir_rxtx+55,r24
+ 830               	.LVL56:
+ 831 0030 8093 0000 		sts ir_rxtx+111,r24
+ 832               	.LVL57:
+ 833 0034 8093 0000 		sts ir_rxtx+167,r24
+ 834               	.LVL58:
+ 835 0038 8093 0000 		sts ir_rxtx+223,r24
+ 836               	.LVL59:
+ 837 003c 8093 0000 		sts ir_rxtx+279,r24
+ 838               	.LVL60:
+ 839 0040 8093 0000 		sts ir_rxtx+335,r24
+ 840               	.LVL61:
+ 841               	.LBE116:
+ 842               	.LBB117:
+ 843               	.LBB118:
+ 844               		.file 3 "../include/ir_led.h"
+   1:../include/ir_led.h **** /** \file *********************************************************************
+   2:../include/ir_led.h ****  * Low level sensing functions using IR channels.
+   3:../include/ir_led.h ****  * Note that there is no IR communication code in this file.
+   4:../include/ir_led.h ****  *****************************************************************************/
+   5:../include/ir_led.h **** #pragma once
+   6:../include/ir_led.h **** 
+   7:../include/ir_led.h **** #include "droplet_base.h"
+   8:../include/ir_led.h **** #include "i2c.h"
+   9:../include/ir_led.h **** 
+  10:../include/ir_led.h **** #define ALL_EMITTERS_CARWAV_bm (PIN0_bm | PIN1_bm | PIN4_bm | PIN5_bm | PIN6_bm | PIN7_bm)
+  11:../include/ir_led.h **** 
+  12:../include/ir_led.h **** #define IR_POWER_ADDR_A 0x2C
+  13:../include/ir_led.h **** #define IR_POWER_ADDR_B 0x2E
+  14:../include/ir_led.h **** 
+  15:../include/ir_led.h **** uint16_t curr_ir_power;
+  16:../include/ir_led.h **** 
+  17:../include/ir_led.h **** void irLedInit(void);
+  18:../include/ir_led.h **** void setAllirPowers(uint16_t power);
+  19:../include/ir_led.h **** void irLedOn(uint8_t direction);
+  20:../include/ir_led.h **** void irLedOff(uint8_t direction);
+  21:../include/ir_led.h **** inline uint16_t getAllirPowers(void){ return curr_ir_power; }
+ 845               		.loc 3 21 0
+ 846 0044 C090 0000 		lds r12,curr_ir_power
+ 847 0048 D090 0000 		lds r13,curr_ir_power+1
+ 848               	.LBE118:
+ 849               	.LBE117:
+ 177:../src/ir_sensor.c **** 	uint16_t curr_power = getAllirPowers();
+ 178:../src/ir_sensor.c **** 	setAllirPowers(256);
+ 850               		.loc 1 178 0
+ 851 004c 80E0      		ldi r24,0
+ 852 004e 91E0      		ldi r25,lo8(1)
+ 853 0050 0E94 0000 		call setAllirPowers
+ 854               	.LVL62:
+ 179:../src/ir_sensor.c **** 	getIrSensors(baseline_meas, 5);
+ 855               		.loc 1 179 0
+ 856 0054 7E01      		movw r14,r28
+ 857 0056 8DE0      		ldi r24,13
+ 858 0058 E80E      		add r14,r24
+ 859 005a F11C      		adc r15,__zero_reg__
+ 860 005c 65E0      		ldi r22,lo8(5)
+ 861 005e C701      		movw r24,r14
+ 862 0060 0E94 0000 		call getIrSensors
+ 863               	.LVL63:
+ 864               	.LBB119:
+ 180:../src/ir_sensor.c **** 	//printf("Coll    base: ");
+ 181:../src/ir_sensor.c **** 	//for(uint8_t i=0;i<6;i++) printf("%4d ", baseline_meas[i]);
+ 182:../src/ir_sensor.c **** 	//printf("\r\n");
+ 183:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++) irLedOn(i);
+ 865               		.loc 1 183 0
+ 866 0064 10E0      		ldi r17,0
+ 867               	.LVL64:
+ 868               	.L34:
+ 869               		.loc 1 183 0 is_stmt 0 discriminator 3
+ 870 0066 812F      		mov r24,r17
+ 871 0068 0E94 0000 		call irLedOn
+ 872               	.LVL65:
+ 873 006c 1F5F      		subi r17,lo8(-(1))
+ 874               	.LVL66:
+ 875 006e 1630      		cpi r17,lo8(6)
+ 876 0070 01F4      		brne .L34
+ 877               	.LVL67:
+ 878               	.LBE119:
+ 879               	.LBB120:
+ 880               	.LBB121:
+ 881               	.LBB122:
+ 882               		.file 4 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+   1:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /* Copyright (c) 2002, Marek Michalkiewicz
+   2:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Copyright (c) 2004,2005,2007 Joerg Wunsch
+   3:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Copyright (c) 2007  Florin-Viorel Petrov
+   4:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    All rights reserved.
+   5:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+   6:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Redistribution and use in source and binary forms, with or without
+   7:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    modification, are permitted provided that the following conditions are met:
+   8:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+   9:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    * Redistributions of source code must retain the above copyright
+  10:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      notice, this list of conditions and the following disclaimer.
+  11:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  12:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    * Redistributions in binary form must reproduce the above copyright
+  13:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      notice, this list of conditions and the following disclaimer in
+  14:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      the documentation and/or other materials provided with the
+  15:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      distribution.
+  16:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  17:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    * Neither the name of the copyright holders nor the names of
+  18:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      contributors may be used to endorse or promote products derived
+  19:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      from this software without specific prior written permission.
+  20:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  21:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  22:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  23:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  24:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  25:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  26:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  27:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  28:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  29:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  30:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  31:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   POSSIBILITY OF SUCH DAMAGE. */
+  32:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  33:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /* $Id$ */
+  34:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  35:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef _UTIL_DELAY_H_
+  36:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #define _UTIL_DELAY_H_ 1
+  37:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  38:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef __DOXYGEN__
+  39:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #  ifndef __HAS_DELAY_CYCLES
+  40:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #    define __HAS_DELAY_CYCLES 1
+  41:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #  endif
+  42:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif  /* __DOXYGEN__ */
+  43:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  44:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #include <inttypes.h>
+  45:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #include <util/delay_basic.h>
+  46:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #include <math.h>
+  47:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  48:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /** \file */
+  49:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /** \defgroup util_delay <util/delay.h>: Convenience functions for busy-wait delay loops
+  50:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \code
+  51:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     #define F_CPU 1000000UL  // 1 MHz
+  52:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     //#define F_CPU 14.7456E6
+  53:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     #include <util/delay.h>
+  54:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \endcode
+  55:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  56:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \note As an alternative method, it is possible to pass the
+  57:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     F_CPU macro down to the compiler from the Makefile.
+  58:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     Obviously, in that case, no \c \#define statement should be
+  59:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     used.
+  60:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  61:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     The functions in this header file are wrappers around the basic
+  62:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     busy-wait functions from <util/delay_basic.h>.  They are meant as
+  63:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     convenience functions where actual time values can be specified
+  64:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     rather than a number of cycles to wait for.  The idea behind is
+  65:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     that compile-time constant expressions will be eliminated by
+  66:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     compiler optimization so floating-point expressions can be used
+  67:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     to calculate the number of delay cycles needed based on the CPU
+  68:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     frequency passed by the macro F_CPU.
+  69:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \note In order for these functions to work as intended, compiler
+  71:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     optimizations <em>must</em> be enabled, and the delay time
+  72:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     <em>must</em> be an expression that is a known constant at
+  73:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     compile-time.  If these requirements are not met, the resulting
+  74:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     delay will be much longer (and basically unpredictable), and
+  75:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     applications that otherwise do not use floating-point calculations
+  76:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     will experience severe code bloat by the floating-point library
+  77:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     routines linked into the application.
+  78:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  79:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     The functions available allow the specification of microsecond, and
+  80:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     millisecond delays directly, using the application-supplied macro
+  81:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     F_CPU as the CPU clock frequency (in Hertz).
+  82:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  83:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** */
+  84:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  85:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if !defined(__DOXYGEN__)
+  86:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** static __inline__ void _delay_us(double __us) __attribute__((__always_inline__));
+  87:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** static __inline__ void _delay_ms(double __ms) __attribute__((__always_inline__));
+  88:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+  89:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  90:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef F_CPU
+  91:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /* prevent compiler error by supplying a default */
+  92:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** # warning "F_CPU not defined for <util/delay.h>"
+  93:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /** \ingroup util_delay
+  94:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \def F_CPU
+  95:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \brief CPU frequency in Hz
+  96:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  97:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     The macro F_CPU specifies the CPU frequency to be considered by
+  98:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     the delay macros.  This macro is normally supplied by the
+  99:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     environment (e.g. from within a project header, or the project's
+ 100:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     Makefile).  The value 1 MHz here is only provided as a "vanilla"
+ 101:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     fallback if no such user-provided definition could be found.
+ 102:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 103:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     In terms of the delay functions, the CPU frequency can be given as
+ 104:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     a floating-point constant (e.g. 3.6864E6 for 3.6864 MHz).
+ 105:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     However, the macros in <util/setbaud.h> require it to be an
+ 106:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     integer value.
+ 107:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****  */
+ 108:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** # define F_CPU 1000000UL
+ 109:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 110:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 111:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef __OPTIMIZE__
+ 112:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** # warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+ 113:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 114:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 115:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 116:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 117:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   __STDC_HOSTED__
+ 118:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #  include <math.h>
+ 119:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 120:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 121:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /**
+ 122:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \ingroup util_delay
+ 123:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 124:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Perform a delay of \c __ms milliseconds, using _delay_loop_2().
+ 125:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 126:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The macro F_CPU is supposed to be defined to a
+ 127:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 128:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 129:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The maximal possible delay is 262.14 ms / F_CPU in MHz.
+ 130:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 131:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    When the user request delay which exceed the maximum possible one,
+ 132:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    _delay_ms() provides a decreased resolution functionality. In this
+ 133:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    mode _delay_ms() will work with a resolution of 1/10 ms, providing
+ 134:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    delays up to 6.5535 seconds (independent from CPU frequency).  The
+ 135:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    user will not be informed about decreased resolution.
+ 136:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 137:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles()
+ 138:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    support, maximal possible delay is 4294967.295 ms/ F_CPU in MHz. For
+ 139:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    values greater than the maximal possible delay, overflows results in
+ 140:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    no delay i.e., 0ms.
+ 141:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 142:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Conversion of \c __ms into clock cycles may not always result in
+ 143:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer.  By default, the clock cycles rounded up to next
+ 144:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer. This ensures that the user gets at least \c __ms
+ 145:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    microseconds of delay.
+ 146:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 147:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Alternatively, by defining the macro \c __DELAY_ROUND_DOWN__, or
+ 148:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c __DELAY_ROUND_CLOSEST__, before including this header file, the
+ 149:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    algorithm can be made to round down, or round to closest integer,
+ 150:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    respectively.
+ 151:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 152:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \note
+ 153:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 154:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The implementation of _delay_ms() based on
+ 155:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    __builtin_avr_delay_cycles() is not backward compatible with older
+ 156:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    implementations.  In order to get functionality backward compatible
+ 157:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    with previous versions, the macro \c "__DELAY_BACKWARD_COMPATIBLE__"
+ 158:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    must be defined before including this header file. Also, the
+ 159:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    backward compatible algorithm will be chosen if the code is
+ 160:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    compiled in a <em>freestanding environment</em> (GCC option
+ 161:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c -ffreestanding), as the math functions required for rounding are
+ 162:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    not available to the compiler then.
+ 163:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 164:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****  */
+ 165:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** void
+ 166:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** _delay_ms(double __ms)
+ 167:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** {
+ 168:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	double __tmp ;
+ 169:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 170:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 171:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   __STDC_HOSTED__
+ 172:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	uint32_t __ticks_dc;
+ 173:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 174:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__tmp = ((F_CPU) / 1e3) * __ms;
+ 175:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 176:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 177:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 178:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 179:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 180:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 181:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 182:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#else
+ 183:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		//round up by default
+ 184:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 185:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#endif
+ 186:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 187:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+ 188:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 189:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #else
+ 190:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	uint16_t __ticks;
+ 191:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__tmp = ((F_CPU) / 4e3) * __ms;
+ 192:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	if (__tmp < 1.0)
+ 193:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks = 1;
+ 194:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	else if (__tmp > 65535)
+ 195:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	{
+ 196:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		//	__ticks = requested delay in 1/10 ms
+ 197:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks = (uint16_t) (__ms * 10.0);
+ 198:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		while(__ticks)
+ 199:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		{
+ 200:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 			// wait 1/10 ms
+ 201:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 			_delay_loop_2(((F_CPU) / 4e3) / 10);
+ 202:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 			__ticks --;
+ 203:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		}
+ 204:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		return;
+ 205:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	}
+ 206:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	else
+ 207:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks = (uint16_t)__tmp;
+ 208:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	_delay_loop_2(__ticks);
+ 209:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 210:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** }
+ 211:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 212:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /**
+ 213:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \ingroup util_delay
+ 214:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 215:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Perform a delay of \c __us microseconds, using _delay_loop_1().
+ 216:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 217:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The macro F_CPU is supposed to be defined to a
+ 218:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 219:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 220:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The maximal possible delay is 768 us / F_CPU in MHz.
+ 221:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 222:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    If the user requests a delay greater than the maximal possible one,
+ 223:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    _delay_us() will automatically call _delay_ms() instead.  The user
+ 224:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    will not be informed about this case.
+ 225:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 226:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles()
+ 227:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    support, maximal possible delay is 4294967.295 us/ F_CPU in MHz. For
+ 228:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    values greater than the maximal possible delay, overflow results in
+ 229:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    no delay i.e., 0us.
+ 230:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 231:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Conversion of \c __us into clock cycles may not always result in
+ 232:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer.  By default, the clock cycles rounded up to next
+ 233:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer. This ensures that the user gets at least \c __us
+ 234:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    microseconds of delay.
+ 235:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 236:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Alternatively, by defining the macro \c __DELAY_ROUND_DOWN__, or
+ 237:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c __DELAY_ROUND_CLOSEST__, before including this header file, the
+ 238:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    algorithm can be made to round down, or round to closest integer,
+ 239:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    respectively.
+ 240:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 241:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \note
+ 242:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 243:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The implementation of _delay_ms() based on
+ 244:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    __builtin_avr_delay_cycles() is not backward compatible with older
+ 245:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    implementations.  In order to get functionality backward compatible
+ 246:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    with previous versions, the macro \c __DELAY_BACKWARD_COMPATIBLE__
+ 247:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    must be defined before including this header file. Also, the
+ 248:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    backward compatible algorithm will be chosen if the code is
+ 249:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    compiled in a <em>freestanding environment</em> (GCC option
+ 250:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c -ffreestanding), as the math functions required for rounding are
+ 251:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    not available to the compiler then.
+ 252:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 253:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****  */
+ 254:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** void
+ 255:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** _delay_us(double __us)
+ 256:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** {
+ 257:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	double __tmp ;
+ 258:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 259:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 260:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   __STDC_HOSTED__
+ 261:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	uint32_t __ticks_dc;
+ 262:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 263:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__tmp = ((F_CPU) / 1e6) * __us;
+ 264:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 265:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 266:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 267:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 268:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 269:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 270:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 271:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#else
+ 272:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		//round up by default
+ 273:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 274:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#endif
+ 275:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 276:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+ 883               		.loc 4 276 0 is_stmt 1
+ 884 0072 AFEC      		ldi r26,lo8(1999)
+ 885 0074 B7E0      		ldi r27,hi8(1999)
+ 886 0076 1197      	1:	sbiw r26,1
+ 887 0078 01F4      		brne 1b
+ 888 007a 00C0      		rjmp .
+ 889 007c 0000      		nop
+ 890               	.LVL68:
+ 891               	.LBE122:
+ 892               	.LBE121:
+ 893               	.LBE120:
+ 184:../src/ir_sensor.c **** 	delay_us(250);	
+ 185:../src/ir_sensor.c **** 	getIrSensors(measured_vals, 5);
+ 894               		.loc 1 185 0
+ 895 007e 65E0      		ldi r22,lo8(5)
+ 896 0080 CE01      		movw r24,r28
+ 897 0082 0196      		adiw r24,1
+ 898 0084 0E94 0000 		call getIrSensors
+ 899               	.LVL69:
+ 900               	.LBB123:
+ 186:../src/ir_sensor.c **** 	//printf("Coll results: ");
+ 187:../src/ir_sensor.c **** 	//for(uint8_t i=0;i<6;i++) printf("%4d ", measured_vals[i]);
+ 188:../src/ir_sensor.c **** 	//printf("\r\n");
+ 189:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++) irLedOff(i);
+ 901               		.loc 1 189 0
+ 902 0088 10E0      		ldi r17,0
+ 903               	.LVL70:
+ 904               	.L35:
+ 905               		.loc 1 189 0 is_stmt 0 discriminator 3
+ 906 008a 812F      		mov r24,r17
+ 907 008c 0E94 0000 		call irLedOff
+ 908               	.LVL71:
+ 909 0090 1F5F      		subi r17,lo8(-(1))
+ 910               	.LVL72:
+ 911 0092 1630      		cpi r17,lo8(6)
+ 912 0094 01F4      		brne .L35
+ 913 0096 FE01      		movw r30,r28
+ 914 0098 3196      		adiw r30,1
+ 915 009a 9701      		movw r18,r14
+ 916 009c 6B2D      		mov r22,r11
+ 917 009e 702F      		mov r23,r16
+ 918               	.L36:
+ 919               	.LBE123:
+ 920               	.LBB124:
+ 190:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++){
+ 191:../src/ir_sensor.c **** 		meas[i] = (measured_vals[i]-baseline_meas[i]);
+ 921               		.loc 1 191 0 is_stmt 1 discriminator 3
+ 922 00a0 8191      		ld r24,Z+
+ 923 00a2 9191      		ld r25,Z+
+ 924 00a4 D901      		movw r26,r18
+ 925 00a6 4D91      		ld r20,X+
+ 926 00a8 5D91      		ld r21,X+
+ 927 00aa 9D01      		movw r18,r26
+ 928 00ac 841B      		sub r24,r20
+ 929 00ae 950B      		sbc r25,r21
+ 930 00b0 DB01      		movw r26,r22
+ 931 00b2 8D93      		st X+,r24
+ 932 00b4 9D93      		st X+,r25
+ 933 00b6 BD01      		movw r22,r26
+ 934               	.LVL73:
+ 190:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++){
+ 935               		.loc 1 190 0 discriminator 3
+ 936 00b8 EE15      		cp r30,r14
+ 937 00ba FF05      		cpc r31,r15
+ 938 00bc 01F4      		brne .L36
+ 939               	.LBE124:
+ 192:../src/ir_sensor.c **** 	}
+ 193:../src/ir_sensor.c **** 	setAllirPowers(curr_power);
+ 940               		.loc 1 193 0
+ 941 00be C601      		movw r24,r12
+ 942 00c0 0E94 0000 		call setAllirPowers
+ 943               	.LVL74:
+ 944               	.LBB125:
+ 194:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++) ir_rxtx[i].status = 0;		
+ 945               		.loc 1 194 0
+ 946 00c4 1092 0000 		sts ir_rxtx+55,__zero_reg__
+ 947               	.LVL75:
+ 948 00c8 1092 0000 		sts ir_rxtx+111,__zero_reg__
+ 949               	.LVL76:
+ 950 00cc 1092 0000 		sts ir_rxtx+167,__zero_reg__
+ 951               	.LVL77:
+ 952 00d0 1092 0000 		sts ir_rxtx+223,__zero_reg__
+ 953               	.LVL78:
+ 954 00d4 1092 0000 		sts ir_rxtx+279,__zero_reg__
+ 955               	.LVL79:
+ 956 00d8 1092 0000 		sts ir_rxtx+335,__zero_reg__
+ 957               	.LVL80:
+ 958               	.L31:
+ 959               	/* epilogue start */
+ 960               	.LBE125:
+ 195:../src/ir_sensor.c **** }	...
+ 961               		.loc 1 195 0
+ 962 00dc 6896      		adiw r28,24
+ 963 00de CDBF      		out __SP_L__,r28
+ 964 00e0 DEBF      		out __SP_H__,r29
+ 965 00e2 DF91      		pop r29
+ 966 00e4 CF91      		pop r28
+ 967 00e6 1F91      		pop r17
+ 968 00e8 0F91      		pop r16
+ 969 00ea FF90      		pop r15
+ 970 00ec EF90      		pop r14
+ 971 00ee DF90      		pop r13
+ 972 00f0 CF90      		pop r12
+ 973 00f2 BF90      		pop r11
+ 974 00f4 0895      		ret
+ 975               	.L40:
+ 173:../src/ir_sensor.c **** 		printf_P(PSTR("IR Hardware busy. Can't check collisions.\r\n"));
+ 976               		.loc 1 173 0
+ 977 00f6 80E0      		ldi r24,lo8(__c.5166)
+ 978 00f8 90E0      		ldi r25,hi8(__c.5166)
+ 979 00fa 9F93      		push r25
+ 980 00fc 8F93      		push r24
+ 981 00fe 0E94 0000 		call printf_P
+ 982               	.LVL81:
+ 174:../src/ir_sensor.c **** 		return;
+ 983               		.loc 1 174 0
+ 984 0102 0F90      		pop __tmp_reg__
+ 985 0104 0F90      		pop __tmp_reg__
+ 986 0106 00C0      		rjmp .L31
+ 987               		.cfi_endproc
+ 988               	.LFE51:
+ 990               		.section	.text.checkCollisions,"ax",@progbits
+ 991               	.global	checkCollisions
+ 993               	checkCollisions:
+ 994               	.LFB50:
+ 158:../src/ir_sensor.c **** uint8_t checkCollisions(){
+ 995               		.loc 1 158 0
+ 996               		.cfi_startproc
+ 997 0000 CF93      		push r28
+ 998               	.LCFI38:
+ 999               		.cfi_def_cfa_offset 4
+ 1000               		.cfi_offset 28, -3
+ 1001 0002 DF93      		push r29
+ 1002               	.LCFI39:
+ 1003               		.cfi_def_cfa_offset 5
+ 1004               		.cfi_offset 29, -4
+ 1005 0004 CDB7      		in r28,__SP_L__
+ 1006 0006 DEB7      		in r29,__SP_H__
+ 1007               	.LCFI40:
+ 1008               		.cfi_def_cfa_register 28
+ 1009 0008 2C97      		sbiw r28,12
+ 1010               	.LCFI41:
+ 1011               		.cfi_def_cfa_offset 17
+ 1012 000a CDBF      		out __SP_L__,r28
+ 1013 000c DEBF      		out __SP_H__,r29
+ 1014               	/* prologue: function */
+ 1015               	/* frame size = 12 */
+ 1016               	/* stack size = 14 */
+ 1017               	.L__stack_usage = 14
+ 1018               	.LVL82:
+ 161:../src/ir_sensor.c **** 	checkCollisionValues(meas);
+ 1019               		.loc 1 161 0
+ 1020 000e CE01      		movw r24,r28
+ 1021 0010 0196      		adiw r24,1
+ 1022 0012 0E94 0000 		call checkCollisionValues
+ 1023               	.LVL83:
+ 1024 0016 FE01      		movw r30,r28
+ 1025 0018 3196      		adiw r30,1
+ 1026 001a A0E0      		ldi r26,lo8(ir_sense_baseline)
+ 1027 001c B0E0      		ldi r27,hi8(ir_sense_baseline)
+ 1028 001e 40E0      		ldi r20,0
+ 1029 0020 50E0      		ldi r21,0
+ 160:../src/ir_sensor.c **** 	uint8_t dirs = 0;
+ 1030               		.loc 1 160 0
+ 1031 0022 80E0      		ldi r24,0
+ 1032               	.LVL84:
+ 1033               	.L43:
+ 1034               	.LBB126:
+ 163:../src/ir_sensor.c **** 		dirs |=  (((meas[i]+ir_sense_baseline[i])>=IR_SENSE_MAX)<<i);
+ 1035               		.loc 1 163 0 discriminator 3
+ 1036 0024 6191      		ld r22,Z+
+ 1037 0026 7191      		ld r23,Z+
+ 1038 0028 2D91      		ld r18,X+
+ 1039 002a 3D91      		ld r19,X+
+ 1040 002c 620F      		add r22,r18
+ 1041 002e 731F      		adc r23,r19
+ 1042 0030 21E0      		ldi r18,lo8(1)
+ 1043 0032 30E0      		ldi r19,0
+ 1044 0034 6F3F      		cpi r22,-1
+ 1045 0036 7740      		sbci r23,7
+ 1046 0038 04F4      		brge .L42
+ 1047 003a 20E0      		ldi r18,0
+ 1048 003c 30E0      		ldi r19,0
+ 1049               	.L42:
+ 1050 003e 042E      		mov r0,r20
+ 1051 0040 00C0      		rjmp 2f
+ 1052               		1:
+ 1053 0042 220F      		lsl r18
+ 1054               		2:
+ 1055 0044 0A94      		dec r0
+ 1056 0046 02F4      		brpl 1b
+ 1057 0048 822B      		or r24,r18
+ 1058               	.LVL85:
+ 1059 004a 4F5F      		subi r20,-1
+ 1060 004c 5F4F      		sbci r21,-1
+ 1061               	.LVL86:
+ 162:../src/ir_sensor.c **** 	for(uint8_t i=0;i<6;i++){
+ 1062               		.loc 1 162 0 discriminator 3
+ 1063 004e 4630      		cpi r20,6
+ 1064 0050 5105      		cpc r21,__zero_reg__
+ 1065 0052 01F4      		brne .L43
+ 1066               	/* epilogue start */
+ 1067               	.LBE126:
+ 166:../src/ir_sensor.c **** }
+ 1068               		.loc 1 166 0
+ 1069 0054 2C96      		adiw r28,12
+ 1070 0056 CDBF      		out __SP_L__,r28
+ 1071 0058 DEBF      		out __SP_H__,r29
+ 1072 005a DF91      		pop r29
+ 1073 005c CF91      		pop r28
+ 1074 005e 0895      		ret
+ 1075               		.cfi_endproc
+ 1076               	.LFE50:
+ 1078               		.section	.progmem.data.__c.5166,"a",@progbits
+ 1081               	__c.5166:
+ 1082 0000 4952 2048 		.string	"IR Hardware busy. Can't check collisions.\r\n"
+ 1082      6172 6477 
+ 1082      6172 6520 
+ 1082      6275 7379 
+ 1082      2E20 4361 
+ 1083               		.section	.bss.ir_sense_baseline,"aw",@nobits
+ 1086               	ir_sense_baseline:
+ 1087 0000 0000 0000 		.zero	12
+ 1087      0000 0000 
+ 1087      0000 0000 
+ 1088               	.global	ir_sense_channels
+ 1089               		.section	.data.ir_sense_channels,"aw",@progbits
+ 1092               	ir_sense_channels:
+ 1093 0000 2002      		.word	544
+ 1094 0002 2802      		.word	552
+ 1095 0004 3002      		.word	560
+ 1096 0006 6002      		.word	608
+ 1097 0008 6802      		.word	616
+ 1098 000a 7002      		.word	624
+ 1099               		.comm	cmdArrivalDir,1,1
+ 1100               		.comm	cmdSenderId,2,1
+ 1101               		.comm	cmdArrivalTime,4,1
+ 1102               		.comm	numWaitingMsgs,1,1
+ 1103               		.comm	hpIrBlock_bm,1,1
+ 1104               		.comm	memoryConsumedByMsgBuffer,2,1
+ 1105               		.comm	incMsgHead,2,1
+ 1106               		.comm	ir_rxtx,336,1
+ 1107               		.comm	obsStart,2,1
+ 1108               		.comm	sendPingPending,1,1
+ 1109               		.comm	mmPerKilostep,16,1
+ 1110               		.comm	motorAdjusts,48,1
+ 1111               		.comm	processing_rnb_flag,1,1
+ 1112               		.comm	rnbCmdID,2,1
+ 1113               		.comm	numWaitingMeas,1,1
+ 1114               		.comm	memoryConsumedByMeasBuffer,2,1
+ 1115               		.comm	incMeasHead,2,1
+ 1116               		.section	.bss.task_storage_arr,"aw",@nobits
+ 1119               	task_storage_arr:
+ 1120 0000 0000 0000 		.zero	140
+ 1120      0000 0000 
+ 1120      0000 0000 
+ 1120      0000 0000 
+ 1120      0000 0000 
+ 1121               		.comm	task_executing,1,1
+ 1122               		.comm	num_tasks,1,1
+ 1123               		.comm	task_list,2,1
+ 1124               		.comm	curr_ir_power,2,1
+ 1125               		.comm	twi,2,1
+ 1126               		.comm	twiMaster,25,1
+ 1127               		.comm	rtc_epoch,2,1
+ 1128               		.comm	droplet_ID,2,1
+ 1129               		.text
+ 1130               	.Letext0:
+ 1131               		.file 5 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+ 1132               		.file 6 "C:/Program Files (x86)/Atmel/Studio/7.0/packs/atmel/XMEGAA_DFP/1.1.68/include/avr/iox128a
+ 1133               		.file 7 "../include/droplet_base.h"
+ 1134               		.file 8 "../include/i2c.h"
+ 1135               		.file 9 "../include/scheduler.h"
+ 1136               		.file 10 "../include/range_algs.h"
+ 1137               		.file 11 "../include/firefly_sync.h"
+ 1138               		.file 12 "../include/ir_comm.h"
+ 1139               		.file 13 "../include/motor.h"
+ 1140               		.file 14 "../include/rgb_sensor.h"
+ 1141               		.file 15 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\i
+DEFINED SYMBOLS
+                            *ABS*:00000000 ir_sensor.c
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:2      *ABS*:0000003e __SP_H__
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:3      *ABS*:0000003d __SP_L__
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:4      *ABS*:0000003f __SREG__
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:5      *ABS*:0000003b __RAMPZ__
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:6      *ABS*:00000034 __CCP__
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:7      *ABS*:00000000 __tmp_reg__
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:8      *ABS*:00000001 __zero_reg__
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:15     .text.irSensorInit:00000000 irSensorInit
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:1086   .bss.ir_sense_baseline:00000000 ir_sense_baseline
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:539    .text.initIrBaselines:00000000 initIrBaselines
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:559    .text.updateIrBaselines:00000000 updateIrBaselines
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:194    .text.getIrSensors:00000000 getIrSensors
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:1092   .data.ir_sense_channels:00000000 ir_sense_channels
+                            *COM*:00000001 hpIrBlock_bm
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:762    .text.checkCollisionValues:00000000 checkCollisionValues
+                            *COM*:00000150 ir_rxtx
+                            *COM*:00000002 curr_ir_power
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:1081   .progmem.data.__c.5166:00000000 __c.5166
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:993    .text.checkCollisions:00000000 checkCollisions
+                            *COM*:00000001 cmdArrivalDir
+                            *COM*:00000002 cmdSenderId
+                            *COM*:00000004 cmdArrivalTime
+                            *COM*:00000001 numWaitingMsgs
+                            *COM*:00000002 memoryConsumedByMsgBuffer
+                            *COM*:00000002 incMsgHead
+                            *COM*:00000002 obsStart
+                            *COM*:00000001 sendPingPending
+                            *COM*:00000010 mmPerKilostep
+                            *COM*:00000030 motorAdjusts
+                            *COM*:00000001 processing_rnb_flag
+                            *COM*:00000002 rnbCmdID
+                            *COM*:00000001 numWaitingMeas
+                            *COM*:00000002 memoryConsumedByMeasBuffer
+                            *COM*:00000002 incMeasHead
+C:\Users\kedar\AppData\Local\Temp\ccyjQf3g.s:1119   .bss.task_storage_arr:00000000 task_storage_arr
+                            *COM*:00000001 task_executing
+                            *COM*:00000001 num_tasks
+                            *COM*:00000002 task_list
+                            *COM*:00000002 twi
+                            *COM*:00000019 twiMaster
+                            *COM*:00000002 rtc_epoch
+                            *COM*:00000002 droplet_ID
+
+UNDEFINED SYMBOLS
+scheduleTask
+schedulePeriodicTask
+measFindMedian
+irIsBusy
+setAllirPowers
+irLedOn
+irLedOff
+printf_P
+__do_copy_data
+__do_clear_bss

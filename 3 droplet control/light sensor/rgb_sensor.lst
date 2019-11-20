@@ -1,0 +1,798 @@
+   1               		.file	"rgb_sensor.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__RAMPZ__ = 0x3b
+   6               	__CCP__ = 0x34
+   7               	__tmp_reg__ = 0
+   8               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  11               		.cfi_sections	.debug_frame
+  12               		.section	.rodata
+  13               	.LC0:
+  14 0000 80        		.byte	-128
+  15 0001 01        		.byte	1
+  16 0002 8F        		.byte	-113
+  17 0003 01        		.byte	1
+  18 0004 81        		.byte	-127
+  19 0005 D5        		.byte	-43
+  20 0006 80        		.byte	-128
+  21 0007 03        		.byte	3
+  22               		.section	.rodata.str1.1,"aMS",@progbits,1
+  23               	.LC1:
+  24 0000 5247 4220 		.string	"RGB Init"
+  24      496E 6974 
+  24      00
+  25 0009 00        		.string	""
+  26               		.section	.text.rgbSensorInit,"ax",@progbits
+  27               	.global	rgbSensorInit
+  29               	rgbSensorInit:
+  30               	.LFB35:
+  31               		.file 1 "../src/rgb_sensor.c"
+   1:../src/rgb_sensor.c **** #include "rgb_sensor.h"
+   2:../src/rgb_sensor.c **** #define RGB_SENSE_ADDR 0x29
+   3:../src/rgb_sensor.c **** 
+   4:../src/rgb_sensor.c **** static const char RGB_SENSE_POWERON_FAILURE[] PROGMEM = "RGB sense power-on failed %u.\r\n";
+   5:../src/rgb_sensor.c **** #ifndef AUDIO_DROPLET
+   6:../src/rgb_sensor.c **** static int16_t r_baseline, g_baseline, b_baseline;
+   7:../src/rgb_sensor.c **** #endif
+   8:../src/rgb_sensor.c **** 
+   9:../src/rgb_sensor.c **** //typedef enum{
+  10:../src/rgb_sensor.c **** 	//R, G, B
+  11:../src/rgb_sensor.c **** //} Colors;
+  12:../src/rgb_sensor.c **** 
+  13:../src/rgb_sensor.c **** typedef union{
+  14:../src/rgb_sensor.c **** 	uint32_t i;
+  15:../src/rgb_sensor.c **** 	float f;
+  16:../src/rgb_sensor.c **** } u;
+  17:../src/rgb_sensor.c **** 
+  18:../src/rgb_sensor.c **** void rgbSensorInit()
+  19:../src/rgb_sensor.c **** {
+  32               		.loc 1 19 0
+  33               		.cfi_startproc
+  34 0000 CF93      		push r28
+  35               	.LCFI0:
+  36               		.cfi_def_cfa_offset 4
+  37               		.cfi_offset 28, -3
+  38 0002 DF93      		push r29
+  39               	.LCFI1:
+  40               		.cfi_def_cfa_offset 5
+  41               		.cfi_offset 29, -4
+  42 0004 CDB7      		in r28,__SP_L__
+  43 0006 DEB7      		in r29,__SP_H__
+  44               	.LCFI2:
+  45               		.cfi_def_cfa_register 28
+  46 0008 6197      		sbiw r28,17
+  47               	.LCFI3:
+  48               		.cfi_def_cfa_offset 22
+  49 000a CDBF      		out __SP_L__,r28
+  50 000c DEBF      		out __SP_H__,r29
+  51               	/* prologue: function */
+  52               	/* frame size = 17 */
+  53               	/* stack size = 19 */
+  54               	.L__stack_usage = 19
+  20:../src/rgb_sensor.c **** 	#ifdef AUDIO_DROPLET
+  21:../src/rgb_sensor.c **** 		uint8_t power_on_sequence[8] = {0x80, 0x01,  // Write 0x01 to ENABLE register, activating the dev
+  55               		.loc 1 21 0
+  56 000e 88E0      		ldi r24,lo8(8)
+  57 0010 E0E0      		ldi r30,lo8(.LC0)
+  58 0012 F0E0      		ldi r31,hi8(.LC0)
+  59 0014 DE01      		movw r26,r28
+  60 0016 1A96      		adiw r26,10
+  61               		0:
+  62 0018 0190      		ld r0,Z+
+  63 001a 0D92      		st X+,r0
+  64 001c 8A95      		dec r24
+  65 001e 01F4      		brne 0b
+  22:../src/rgb_sensor.c **** 										0x8F, 0x01,  // Write 0x01 to CONTROL register, setting the gain to x4.
+  23:../src/rgb_sensor.c **** 										0x81, 0xD5,	 // Write 0xD5 to ATIME register, setting the integration time to 2.4ms*(256-
+  24:../src/rgb_sensor.c **** 										0x80, 0x03};  // Write 0x03 to ENABLE register, activating the ADC (and leaving the oscil
+  25:../src/rgb_sensor.c **** 		char callerDescr[9] = "RGB Init\0";
+  66               		.loc 1 25 0
+  67 0020 89E0      		ldi r24,lo8(9)
+  68 0022 E0E0      		ldi r30,lo8(.LC1)
+  69 0024 F0E0      		ldi r31,hi8(.LC1)
+  70 0026 DE01      		movw r26,r28
+  71 0028 1196      		adiw r26,1
+  72               		0:
+  73 002a 0190      		ld r0,Z+
+  74 002c 0D92      		st X+,r0
+  75 002e 8A95      		dec r24
+  76 0030 01F4      		brne 0b
+  26:../src/rgb_sensor.c **** 		uint8_t result = twiWriteWrapper(RGB_SENSE_ADDR, &(power_on_sequence[0]), 2, callerDescr);
+  77               		.loc 1 26 0
+  78 0032 9E01      		movw r18,r28
+  79 0034 2F5F      		subi r18,-1
+  80 0036 3F4F      		sbci r19,-1
+  81 0038 42E0      		ldi r20,lo8(2)
+  82 003a BE01      		movw r22,r28
+  83 003c 665F      		subi r22,-10
+  84 003e 7F4F      		sbci r23,-1
+  85 0040 89E2      		ldi r24,lo8(41)
+  86 0042 0E94 0000 		call twiWriteWrapper
+  87               	.LVL0:
+  27:../src/rgb_sensor.c **** 		if(!result)	printf_P(RGB_SENSE_POWERON_FAILURE,1);
+  88               		.loc 1 27 0
+  89 0046 8823      		tst r24
+  90 0048 01F4      		brne .+2
+  91 004a 00C0      		rjmp .L7
+  92               	.LVL1:
+  93               	.L2:
+  28:../src/rgb_sensor.c **** 		result = twiWriteWrapper(RGB_SENSE_ADDR, &(power_on_sequence[2]), 2, callerDescr);
+  94               		.loc 1 28 0
+  95 004c 9E01      		movw r18,r28
+  96 004e 2F5F      		subi r18,-1
+  97 0050 3F4F      		sbci r19,-1
+  98 0052 42E0      		ldi r20,lo8(2)
+  99 0054 BE01      		movw r22,r28
+ 100 0056 645F      		subi r22,-12
+ 101 0058 7F4F      		sbci r23,-1
+ 102 005a 89E2      		ldi r24,lo8(41)
+ 103 005c 0E94 0000 		call twiWriteWrapper
+ 104               	.LVL2:
+  29:../src/rgb_sensor.c **** 		if(!result)	printf_P(RGB_SENSE_POWERON_FAILURE,2);
+ 105               		.loc 1 29 0
+ 106 0060 8823      		tst r24
+ 107 0062 01F0      		breq .L8
+ 108               	.LVL3:
+ 109               	.L3:
+  30:../src/rgb_sensor.c **** 		result = twiWriteWrapper(RGB_SENSE_ADDR, &(power_on_sequence[4]), 2, callerDescr);
+ 110               		.loc 1 30 0
+ 111 0064 9E01      		movw r18,r28
+ 112 0066 2F5F      		subi r18,-1
+ 113 0068 3F4F      		sbci r19,-1
+ 114 006a 42E0      		ldi r20,lo8(2)
+ 115 006c BE01      		movw r22,r28
+ 116 006e 625F      		subi r22,-14
+ 117 0070 7F4F      		sbci r23,-1
+ 118 0072 89E2      		ldi r24,lo8(41)
+ 119 0074 0E94 0000 		call twiWriteWrapper
+ 120               	.LVL4:
+  31:../src/rgb_sensor.c **** 		if(!result)	printf_P(RGB_SENSE_POWERON_FAILURE,3);
+ 121               		.loc 1 31 0
+ 122 0078 8823      		tst r24
+ 123 007a 01F0      		breq .L9
+ 124               	.LVL5:
+ 125               	.L4:
+  32:../src/rgb_sensor.c **** 		result = twiWriteWrapper(RGB_SENSE_ADDR, &(power_on_sequence[6]), 2, callerDescr);
+ 126               		.loc 1 32 0
+ 127 007c 9E01      		movw r18,r28
+ 128 007e 2F5F      		subi r18,-1
+ 129 0080 3F4F      		sbci r19,-1
+ 130 0082 42E0      		ldi r20,lo8(2)
+ 131 0084 BE01      		movw r22,r28
+ 132 0086 605F      		subi r22,-16
+ 133 0088 7F4F      		sbci r23,-1
+ 134 008a 89E2      		ldi r24,lo8(41)
+ 135 008c 0E94 0000 		call twiWriteWrapper
+ 136               	.LVL6:
+  33:../src/rgb_sensor.c **** 		if(!result)	printf_P(RGB_SENSE_POWERON_FAILURE,4);
+ 137               		.loc 1 33 0
+ 138 0090 8111      		cpse r24,__zero_reg__
+ 139 0092 00C0      		rjmp .L1
+ 140               		.loc 1 33 0 is_stmt 0 discriminator 1
+ 141 0094 1F92      		push __zero_reg__
+ 142 0096 84E0      		ldi r24,lo8(4)
+ 143               	.LVL7:
+ 144 0098 8F93      		push r24
+ 145 009a 80E0      		ldi r24,lo8(RGB_SENSE_POWERON_FAILURE)
+ 146 009c 90E0      		ldi r25,hi8(RGB_SENSE_POWERON_FAILURE)
+ 147 009e 9F93      		push r25
+ 148 00a0 8F93      		push r24
+ 149 00a2 0E94 0000 		call printf_P
+ 150               	.LVL8:
+ 151 00a6 0F90      		pop __tmp_reg__
+ 152 00a8 0F90      		pop __tmp_reg__
+ 153 00aa 0F90      		pop __tmp_reg__
+ 154 00ac 0F90      		pop __tmp_reg__
+ 155               	.L1:
+ 156               	/* epilogue start */
+  34:../src/rgb_sensor.c **** 	#else		
+  35:../src/rgb_sensor.c **** 		RGB_SENSOR_PORT.DIRCLR = RGB_SENSOR_R_PIN_bm | RGB_SENSOR_G_PIN_bm | RGB_SENSOR_B_PIN_bm;
+  36:../src/rgb_sensor.c **** 
+  37:../src/rgb_sensor.c **** 		ADCA.REFCTRL = ADC_REFSEL_AREFA_gc;
+  38:../src/rgb_sensor.c **** 		ADCA.CTRLB = ADC_RESOLUTION_LEFT12BIT_gc | ADC_CONMODE_bm;
+  39:../src/rgb_sensor.c **** 		ADCA.PRESCALER = ADC_PRESCALER_DIV256_gc;
+  40:../src/rgb_sensor.c **** 		/* When differential input is used, signed mode must be used. (sec. 28.6 of Manual) */
+  41:../src/rgb_sensor.c **** 
+  42:../src/rgb_sensor.c **** 		ADCA.CH0.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_1X_gc;	//Probably should turn the gai
+  43:../src/rgb_sensor.c **** 		ADCA.CH1.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_1X_gc;	//Probably should turn the gai
+  44:../src/rgb_sensor.c **** 		ADCA.CH2.CTRL = ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_2X_gc;	//Probably should turn the gai
+  45:../src/rgb_sensor.c **** 	
+  46:../src/rgb_sensor.c **** 		ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN5_gc | ADC_CH_MUXNEG_INTGND_MODE4_gc;	// Red sensor on ADC A 
+  47:../src/rgb_sensor.c **** 		ADCA.CH1.MUXCTRL = ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG_INTGND_MODE4_gc;	// Green sensor on ADC 
+  48:../src/rgb_sensor.c **** 		ADCA.CH2.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc | ADC_CH_MUXNEG_INTGND_MODE4_gc;	// Blue sensor on ADC A
+  49:../src/rgb_sensor.c **** 	
+  50:../src/rgb_sensor.c **** 		ADCA.CALL = PRODSIGNATURES_ADCACAL0;
+  51:../src/rgb_sensor.c **** 		ADCA.CALH = PRODSIGNATURES_ADCACAL1;
+  52:../src/rgb_sensor.c **** 
+  53:../src/rgb_sensor.c **** 		ADCA.CTRLA = ADC_ENABLE_bm;
+  54:../src/rgb_sensor.c **** 	
+  55:../src/rgb_sensor.c **** 		//read_color_settings();
+  56:../src/rgb_sensor.c **** 	
+  57:../src/rgb_sensor.c **** 		delay_us(50);
+  58:../src/rgb_sensor.c **** 		const int8_t num_samples = 3;
+  59:../src/rgb_sensor.c **** 		getRedSensor(); getBlueSensor(); getGreenSensor();
+  60:../src/rgb_sensor.c **** 		delayMS(10);
+  61:../src/rgb_sensor.c **** 		int16_t r_avg=0, g_avg=0, b_avg=0;
+  62:../src/rgb_sensor.c **** 		for(uint8_t i=0; i<num_samples; i++)
+  63:../src/rgb_sensor.c **** 		{
+  64:../src/rgb_sensor.c **** 			r_avg+=getRedSensor();
+  65:../src/rgb_sensor.c **** 			g_avg+=getGreenSensor();
+  66:../src/rgb_sensor.c **** 			b_avg+=getBlueSensor();
+  67:../src/rgb_sensor.c **** 			delayMS(10);
+  68:../src/rgb_sensor.c **** 			//printf("\r\n");
+  69:../src/rgb_sensor.c **** 		}
+  70:../src/rgb_sensor.c **** 		r_baseline= r_avg/num_samples;
+  71:../src/rgb_sensor.c **** 		g_baseline= g_avg/num_samples;
+  72:../src/rgb_sensor.c **** 		b_baseline= b_avg/num_samples;
+  73:../src/rgb_sensor.c **** 		//printf("Baselines:\r\n%3d  %3d  %3d\r\n", r_baseline, g_baseline, b_baseline);
+  74:../src/rgb_sensor.c **** 		r_baseline = 0;
+  75:../src/rgb_sensor.c **** 		g_baseline = 0;
+  76:../src/rgb_sensor.c **** 		b_baseline = 0;	
+  77:../src/rgb_sensor.c **** 	#endif		
+  78:../src/rgb_sensor.c **** }
+ 157               		.loc 1 78 0 is_stmt 1
+ 158 00ae 6196      		adiw r28,17
+ 159 00b0 CDBF      		out __SP_L__,r28
+ 160 00b2 DEBF      		out __SP_H__,r29
+ 161 00b4 DF91      		pop r29
+ 162 00b6 CF91      		pop r28
+ 163 00b8 0895      		ret
+ 164               	.LVL9:
+ 165               	.L9:
+  31:../src/rgb_sensor.c **** 		result = twiWriteWrapper(RGB_SENSE_ADDR, &(power_on_sequence[6]), 2, callerDescr);
+ 166               		.loc 1 31 0 discriminator 1
+ 167 00ba 1F92      		push __zero_reg__
+ 168 00bc 83E0      		ldi r24,lo8(3)
+ 169               	.LVL10:
+ 170 00be 8F93      		push r24
+ 171 00c0 80E0      		ldi r24,lo8(RGB_SENSE_POWERON_FAILURE)
+ 172 00c2 90E0      		ldi r25,hi8(RGB_SENSE_POWERON_FAILURE)
+ 173 00c4 9F93      		push r25
+ 174 00c6 8F93      		push r24
+ 175 00c8 0E94 0000 		call printf_P
+ 176               	.LVL11:
+ 177 00cc 0F90      		pop __tmp_reg__
+ 178 00ce 0F90      		pop __tmp_reg__
+ 179 00d0 0F90      		pop __tmp_reg__
+ 180 00d2 0F90      		pop __tmp_reg__
+ 181 00d4 00C0      		rjmp .L4
+ 182               	.LVL12:
+ 183               	.L8:
+  29:../src/rgb_sensor.c **** 		result = twiWriteWrapper(RGB_SENSE_ADDR, &(power_on_sequence[4]), 2, callerDescr);
+ 184               		.loc 1 29 0 discriminator 1
+ 185 00d6 1F92      		push __zero_reg__
+ 186 00d8 82E0      		ldi r24,lo8(2)
+ 187               	.LVL13:
+ 188 00da 8F93      		push r24
+ 189 00dc 80E0      		ldi r24,lo8(RGB_SENSE_POWERON_FAILURE)
+ 190 00de 90E0      		ldi r25,hi8(RGB_SENSE_POWERON_FAILURE)
+ 191 00e0 9F93      		push r25
+ 192 00e2 8F93      		push r24
+ 193 00e4 0E94 0000 		call printf_P
+ 194               	.LVL14:
+ 195 00e8 0F90      		pop __tmp_reg__
+ 196 00ea 0F90      		pop __tmp_reg__
+ 197 00ec 0F90      		pop __tmp_reg__
+ 198 00ee 0F90      		pop __tmp_reg__
+ 199 00f0 00C0      		rjmp .L3
+ 200               	.LVL15:
+ 201               	.L7:
+  27:../src/rgb_sensor.c **** 		result = twiWriteWrapper(RGB_SENSE_ADDR, &(power_on_sequence[2]), 2, callerDescr);
+ 202               		.loc 1 27 0 discriminator 1
+ 203 00f2 1F92      		push __zero_reg__
+ 204 00f4 81E0      		ldi r24,lo8(1)
+ 205               	.LVL16:
+ 206 00f6 8F93      		push r24
+ 207 00f8 80E0      		ldi r24,lo8(RGB_SENSE_POWERON_FAILURE)
+ 208 00fa 90E0      		ldi r25,hi8(RGB_SENSE_POWERON_FAILURE)
+ 209 00fc 9F93      		push r25
+ 210 00fe 8F93      		push r24
+ 211 0100 0E94 0000 		call printf_P
+ 212               	.LVL17:
+ 213 0104 0F90      		pop __tmp_reg__
+ 214 0106 0F90      		pop __tmp_reg__
+ 215 0108 0F90      		pop __tmp_reg__
+ 216 010a 0F90      		pop __tmp_reg__
+ 217 010c 00C0      		rjmp .L2
+ 218               		.cfi_endproc
+ 219               	.LFE35:
+ 221               		.section	.rodata.str1.1
+ 222               	.LC2:
+ 223 000a 4765 7420 		.string	"Get RGB"
+ 223      5247 4200 
+ 224 0012 00        		.string	""
+ 225               		.section	.text.getRGB,"ax",@progbits
+ 226               	.global	getRGB
+ 228               	getRGB:
+ 229               	.LFB36:
+  79:../src/rgb_sensor.c **** 
+  80:../src/rgb_sensor.c **** #ifndef AUDIO_DROPLET
+  81:../src/rgb_sensor.c **** 
+  82:../src/rgb_sensor.c **** int16_t getRedSensor(){
+  83:../src/rgb_sensor.c **** 	int16_t meas[RGB_MEAS_COUNT];
+  84:../src/rgb_sensor.c **** 	int16_t red_val;
+  85:../src/rgb_sensor.c **** 	//printf("R: ");
+  86:../src/rgb_sensor.c **** 	for(uint8_t meas_count=0; meas_count<RGB_MEAS_COUNT; meas_count++){
+  87:../src/rgb_sensor.c **** 		ADCA.CH0.CTRL |= ADC_CH_START_bm;
+  88:../src/rgb_sensor.c **** 		while (ADCA.CH0.INTFLAGS==0){};		// wait for measurement to complete
+  89:../src/rgb_sensor.c **** 		meas[meas_count] = ((((int16_t)(ADCA.CH0.RESH))<<8)|((int16_t)ADCA.CH0.RESL))>>4;	
+  90:../src/rgb_sensor.c **** 		ADCA.CH0.INTFLAGS=1; // clear the complete flag				
+  91:../src/rgb_sensor.c **** 		//printf("%6d ", meas[meas_count]);
+  92:../src/rgb_sensor.c **** 	}
+  93:../src/rgb_sensor.c **** 	//printf("\r\n");
+  94:../src/rgb_sensor.c **** 	red_val=measFindMedian(&meas[2], RGB_MEAS_COUNT-2);
+  95:../src/rgb_sensor.c **** 	return red_val;
+  96:../src/rgb_sensor.c **** }
+  97:../src/rgb_sensor.c **** 
+  98:../src/rgb_sensor.c **** int16_t getGreenSensor(){
+  99:../src/rgb_sensor.c **** 	int16_t meas[RGB_MEAS_COUNT];
+ 100:../src/rgb_sensor.c **** 	int16_t green_val;		
+ 101:../src/rgb_sensor.c **** 	//printf("G: ");
+ 102:../src/rgb_sensor.c **** 	for(uint8_t meas_count=0; meas_count<RGB_MEAS_COUNT; meas_count++)	{
+ 103:../src/rgb_sensor.c **** 		ADCA.CH1.CTRL |= ADC_CH_START_bm;
+ 104:../src/rgb_sensor.c **** 		while (ADCA.CH1.INTFLAGS==0){};		// wait for measurement to complete
+ 105:../src/rgb_sensor.c **** 		meas[meas_count] = ((((int16_t)(ADCA.CH1.RESH))<<8)|((int16_t)ADCA.CH1.RESL))>>4;		
+ 106:../src/rgb_sensor.c **** 		ADCA.CH1.INTFLAGS=1; // clear the complete flag	
+ 107:../src/rgb_sensor.c **** 		//printf("%6d ", meas[meas_count]);
+ 108:../src/rgb_sensor.c **** 	}
+ 109:../src/rgb_sensor.c **** 	//printf("\r\n");
+ 110:../src/rgb_sensor.c **** 	green_val=measFindMedian(&meas[2], RGB_MEAS_COUNT-2);
+ 111:../src/rgb_sensor.c **** 
+ 112:../src/rgb_sensor.c **** 	return green_val;
+ 113:../src/rgb_sensor.c **** }
+ 114:../src/rgb_sensor.c **** 
+ 115:../src/rgb_sensor.c **** int16_t getBlueSensor(){
+ 116:../src/rgb_sensor.c **** 	int16_t meas[RGB_MEAS_COUNT];
+ 117:../src/rgb_sensor.c **** 	int16_t blue_val;
+ 118:../src/rgb_sensor.c **** 	//printf("B: ");
+ 119:../src/rgb_sensor.c **** 	for(uint8_t meas_count=0; meas_count<RGB_MEAS_COUNT; meas_count++)	{
+ 120:../src/rgb_sensor.c **** 		ADCA.CH2.CTRL |= ADC_CH_START_bm;
+ 121:../src/rgb_sensor.c **** 		while (ADCA.CH2.INTFLAGS==0){};		// wait for measurement to complete
+ 122:../src/rgb_sensor.c **** 		meas[meas_count] = ((((int16_t)(ADCA.CH2.RESH))<<8)|((int16_t)ADCA.CH2.RESL))>>4;
+ 123:../src/rgb_sensor.c **** 		ADCA.CH2.INTFLAGS=1; // clear the complete flag		
+ 124:../src/rgb_sensor.c **** 		//printf("%6d ", meas[meas_count]);
+ 125:../src/rgb_sensor.c **** 	}		
+ 126:../src/rgb_sensor.c **** 	//printf("\r\n");
+ 127:../src/rgb_sensor.c **** 	blue_val=measFindMedian(&meas[2], RGB_MEAS_COUNT-2);
+ 128:../src/rgb_sensor.c **** 		
+ 129:../src/rgb_sensor.c **** 	return blue_val;
+ 130:../src/rgb_sensor.c **** }
+ 131:../src/rgb_sensor.c **** 
+ 132:../src/rgb_sensor.c **** #endif
+ 133:../src/rgb_sensor.c **** 
+ 134:../src/rgb_sensor.c **** 
+ 135:../src/rgb_sensor.c **** void getRGB(int16_t *r, int16_t *g, int16_t *b)
+ 136:../src/rgb_sensor.c **** {
+ 230               		.loc 1 136 0
+ 231               		.cfi_startproc
+ 232               	.LVL18:
+ 233 0000 AF92      		push r10
+ 234               	.LCFI4:
+ 235               		.cfi_def_cfa_offset 4
+ 236               		.cfi_offset 10, -3
+ 237 0002 BF92      		push r11
+ 238               	.LCFI5:
+ 239               		.cfi_def_cfa_offset 5
+ 240               		.cfi_offset 11, -4
+ 241 0004 CF92      		push r12
+ 242               	.LCFI6:
+ 243               		.cfi_def_cfa_offset 6
+ 244               		.cfi_offset 12, -5
+ 245 0006 DF92      		push r13
+ 246               	.LCFI7:
+ 247               		.cfi_def_cfa_offset 7
+ 248               		.cfi_offset 13, -6
+ 249 0008 EF92      		push r14
+ 250               	.LCFI8:
+ 251               		.cfi_def_cfa_offset 8
+ 252               		.cfi_offset 14, -7
+ 253 000a FF92      		push r15
+ 254               	.LCFI9:
+ 255               		.cfi_def_cfa_offset 9
+ 256               		.cfi_offset 15, -8
+ 257 000c 0F93      		push r16
+ 258               	.LCFI10:
+ 259               		.cfi_def_cfa_offset 10
+ 260               		.cfi_offset 16, -9
+ 261 000e 1F93      		push r17
+ 262               	.LCFI11:
+ 263               		.cfi_def_cfa_offset 11
+ 264               		.cfi_offset 17, -10
+ 265 0010 CF93      		push r28
+ 266               	.LCFI12:
+ 267               		.cfi_def_cfa_offset 12
+ 268               		.cfi_offset 28, -11
+ 269 0012 DF93      		push r29
+ 270               	.LCFI13:
+ 271               		.cfi_def_cfa_offset 13
+ 272               		.cfi_offset 29, -12
+ 273 0014 CDB7      		in r28,__SP_L__
+ 274 0016 DEB7      		in r29,__SP_H__
+ 275               	.LCFI14:
+ 276               		.cfi_def_cfa_register 28
+ 277 0018 2997      		sbiw r28,9
+ 278               	.LCFI15:
+ 279               		.cfi_def_cfa_offset 22
+ 280 001a CDBF      		out __SP_L__,r28
+ 281 001c DEBF      		out __SP_H__,r29
+ 282               	/* prologue: function */
+ 283               	/* frame size = 9 */
+ 284               	/* stack size = 19 */
+ 285               	.L__stack_usage = 19
+ 286 001e 5C01      		movw r10,r24
+ 287 0020 6B01      		movw r12,r22
+ 288 0022 7A01      		movw r14,r20
+ 137:../src/rgb_sensor.c **** 	#ifdef AUDIO_DROPLET
+ 138:../src/rgb_sensor.c **** 		
+ 139:../src/rgb_sensor.c **** 		uint8_t write_sequence = 0xB4;
+ 289               		.loc 1 139 0
+ 290 0024 84EB      		ldi r24,lo8(-76)
+ 291               	.LVL19:
+ 292 0026 8987      		std Y+9,r24
+ 140:../src/rgb_sensor.c **** 		char callerDescr[8] = "Get RGB\0";
+ 293               		.loc 1 140 0
+ 294 0028 88E0      		ldi r24,lo8(8)
+ 295 002a E0E0      		ldi r30,lo8(.LC2)
+ 296 002c F0E0      		ldi r31,hi8(.LC2)
+ 297 002e DE01      		movw r26,r28
+ 298 0030 1196      		adiw r26,1
+ 299               		0:
+ 300 0032 0190      		ld r0,Z+
+ 301 0034 0D92      		st X+,r0
+ 302 0036 8A95      		dec r24
+ 303 0038 01F4      		brne 0b
+ 141:../src/rgb_sensor.c **** 		uint8_t result = twiWriteReadWrapper(RGB_SENSE_ADDR, &write_sequence, 1, 8, callerDescr);
+ 304               		.loc 1 141 0
+ 305 003a 8E01      		movw r16,r28
+ 306 003c 0F5F      		subi r16,-1
+ 307 003e 1F4F      		sbci r17,-1
+ 308 0040 28E0      		ldi r18,lo8(8)
+ 309 0042 41E0      		ldi r20,lo8(1)
+ 310               	.LVL20:
+ 311 0044 BE01      		movw r22,r28
+ 312               	.LVL21:
+ 313 0046 675F      		subi r22,-9
+ 314 0048 7F4F      		sbci r23,-1
+ 315 004a 89E2      		ldi r24,lo8(41)
+ 316 004c 0E94 0000 		call twiWriteReadWrapper
+ 317               	.LVL22:
+ 142:../src/rgb_sensor.c **** 		int16_t* temp_values = (int16_t*)(twi->readData);
+ 143:../src/rgb_sensor.c **** 		if(result)
+ 318               		.loc 1 143 0
+ 319 0050 8823      		tst r24
+ 320 0052 01F0      		breq .L11
+ 142:../src/rgb_sensor.c **** 		int16_t* temp_values = (int16_t*)(twi->readData);
+ 321               		.loc 1 142 0
+ 322 0054 E091 0000 		lds r30,twi
+ 323 0058 F091 0000 		lds r31,twi+1
+ 144:../src/rgb_sensor.c **** 		{
+ 145:../src/rgb_sensor.c **** 			//*c=temp_values[0];
+ 146:../src/rgb_sensor.c **** 			*r=temp_values[1];
+ 324               		.loc 1 146 0
+ 325 005c 8585      		ldd r24,Z+13
+ 326 005e 9685      		ldd r25,Z+14
+ 327               	.LVL23:
+ 328 0060 D501      		movw r26,r10
+ 329 0062 8D93      		st X+,r24
+ 330 0064 9C93      		st X,r25
+ 147:../src/rgb_sensor.c **** 			*g=temp_values[2];
+ 331               		.loc 1 147 0
+ 332 0066 8785      		ldd r24,Z+15
+ 333 0068 9089      		ldd r25,Z+16
+ 334 006a D601      		movw r26,r12
+ 335 006c 8D93      		st X+,r24
+ 336 006e 9C93      		st X,r25
+ 148:../src/rgb_sensor.c **** 			*b=temp_values[3];
+ 337               		.loc 1 148 0
+ 338 0070 8189      		ldd r24,Z+17
+ 339 0072 9289      		ldd r25,Z+18
+ 340 0074 F701      		movw r30,r14
+ 341 0076 8083      		st Z,r24
+ 342 0078 9183      		std Z+1,r25
+ 343               	.LVL24:
+ 344               	.L10:
+ 345               	/* epilogue start */
+ 149:../src/rgb_sensor.c **** 			//printf("% 5d % 5d % 5d % 5d\r\n", temp_values[0], *r, *g, *b);
+ 150:../src/rgb_sensor.c **** 		}
+ 151:../src/rgb_sensor.c **** 		else printf_P(PSTR("Read failed.\r\n"));
+ 152:../src/rgb_sensor.c **** 	#else
+ 153:../src/rgb_sensor.c **** 		int16_t rTemp,gTemp,bTemp;
+ 154:../src/rgb_sensor.c **** 	
+ 155:../src/rgb_sensor.c **** 		rTemp = getRedSensor();
+ 156:../src/rgb_sensor.c **** 		gTemp = getGreenSensor();
+ 157:../src/rgb_sensor.c **** 		bTemp = getBlueSensor();		
+ 158:../src/rgb_sensor.c **** 		rTemp = rTemp - r_baseline;
+ 159:../src/rgb_sensor.c **** 		gTemp = gTemp - g_baseline;
+ 160:../src/rgb_sensor.c **** 		bTemp = bTemp - b_baseline;
+ 161:../src/rgb_sensor.c **** 		//if(rTemp<0)	rTemp=0;
+ 162:../src/rgb_sensor.c **** 		//if(gTemp<0)	gTemp=0;
+ 163:../src/rgb_sensor.c **** 		//if(bTemp<0)	bTemp=0;
+ 164:../src/rgb_sensor.c **** 		if(r!=NULL) *r = rTemp;
+ 165:../src/rgb_sensor.c **** 		if(g!=NULL) *g = gTemp;
+ 166:../src/rgb_sensor.c **** 		if(b!=NULL) *b = bTemp;
+ 167:../src/rgb_sensor.c **** 	#endif
+ 168:../src/rgb_sensor.c **** }
+ 346               		.loc 1 168 0
+ 347 007a 2996      		adiw r28,9
+ 348 007c CDBF      		out __SP_L__,r28
+ 349 007e DEBF      		out __SP_H__,r29
+ 350 0080 DF91      		pop r29
+ 351 0082 CF91      		pop r28
+ 352 0084 1F91      		pop r17
+ 353 0086 0F91      		pop r16
+ 354 0088 FF90      		pop r15
+ 355 008a EF90      		pop r14
+ 356               	.LVL25:
+ 357 008c DF90      		pop r13
+ 358 008e CF90      		pop r12
+ 359               	.LVL26:
+ 360 0090 BF90      		pop r11
+ 361 0092 AF90      		pop r10
+ 362               	.LVL27:
+ 363 0094 0895      		ret
+ 364               	.LVL28:
+ 365               	.L11:
+ 151:../src/rgb_sensor.c **** 	#else
+ 366               		.loc 1 151 0
+ 367 0096 80E0      		ldi r24,lo8(__c.4806)
+ 368 0098 90E0      		ldi r25,hi8(__c.4806)
+ 369               	.LVL29:
+ 370 009a 9F93      		push r25
+ 371 009c 8F93      		push r24
+ 372 009e 0E94 0000 		call printf_P
+ 373               	.LVL30:
+ 374 00a2 0F90      		pop __tmp_reg__
+ 375 00a4 0F90      		pop __tmp_reg__
+ 376               		.loc 1 168 0
+ 377 00a6 00C0      		rjmp .L10
+ 378               		.cfi_endproc
+ 379               	.LFE36:
+ 381               		.section	.text.measFindMedian,"ax",@progbits
+ 382               	.global	measFindMedian
+ 384               	measFindMedian:
+ 385               	.LFB37:
+ 169:../src/rgb_sensor.c **** 
+ 170:../src/rgb_sensor.c **** // Finds the median of arr_len numbers by finding the max, finding the min, and returning the other
+ 171:../src/rgb_sensor.c **** // WARNING! This function modifies the array!
+ 172:../src/rgb_sensor.c **** int16_t measFindMedian(int16_t* meas, uint8_t arr_len){
+ 386               		.loc 1 172 0
+ 387               		.cfi_startproc
+ 388               	.LVL31:
+ 389 0000 CF93      		push r28
+ 390               	.LCFI16:
+ 391               		.cfi_def_cfa_offset 4
+ 392               		.cfi_offset 28, -3
+ 393 0002 DF93      		push r29
+ 394               	.LCFI17:
+ 395               		.cfi_def_cfa_offset 5
+ 396               		.cfi_offset 29, -4
+ 397               	/* prologue: function */
+ 398               	/* frame size = 0 */
+ 399               	/* stack size = 2 */
+ 400               	.L__stack_usage = 2
+ 401 0004 EC01      		movw r28,r24
+ 173:../src/rgb_sensor.c **** 	if(arr_len==1) return meas[0];
+ 402               		.loc 1 173 0
+ 403 0006 6130      		cpi r22,lo8(1)
+ 404 0008 01F4      		brne .+2
+ 405 000a 00C0      		rjmp .L30
+ 174:../src/rgb_sensor.c **** 	else if(arr_len==2) return (meas[0]+meas[1])/2;
+ 406               		.loc 1 174 0
+ 407 000c 6230      		cpi r22,lo8(2)
+ 408 000e 01F4      		brne .+2
+ 409 0010 00C0      		rjmp .L31
+ 410               	.LVL32:
+ 411               	.LBB2:
+ 175:../src/rgb_sensor.c **** 	
+ 176:../src/rgb_sensor.c **** 	for(uint8_t i=0; i<arr_len ; i++){
+ 412               		.loc 1 176 0 discriminator 1
+ 413 0012 6623      		tst r22
+ 414 0014 01F0      		breq .L24
+ 415 0016 DE01      		movw r26,r28
+ 416               		.loc 1 176 0 is_stmt 0
+ 417 0018 80E0      		ldi r24,0
+ 418               	.LVL33:
+ 419               	.LBB3:
+ 177:../src/rgb_sensor.c **** 		for(uint8_t j=i+1 ; j<arr_len ; j++){
+ 420               		.loc 1 177 0 is_stmt 1
+ 421 001a 8F5F      		subi r24,lo8(-(1))
+ 422               	.LVL34:
+ 423 001c 6817      		cp r22,r24
+ 424 001e 01F0      		breq .L18
+ 425               	.LVL35:
+ 426               	.L32:
+ 427 0020 982F      		mov r25,r24
+ 428               	.LVL36:
+ 429               	.L20:
+ 178:../src/rgb_sensor.c **** 			if(meas[j] < meas[i]){
+ 430               		.loc 1 178 0
+ 431 0022 E92F      		mov r30,r25
+ 432 0024 F0E0      		ldi r31,0
+ 433 0026 EE0F      		lsl r30
+ 434 0028 FF1F      		rol r31
+ 435 002a EC0F      		add r30,r28
+ 436 002c FD1F      		adc r31,r29
+ 437 002e 4081      		ld r20,Z
+ 438 0030 5181      		ldd r21,Z+1
+ 439 0032 2D91      		ld r18,X+
+ 440 0034 3C91      		ld r19,X
+ 441 0036 1197      		sbiw r26,1
+ 442 0038 4217      		cp r20,r18
+ 443 003a 5307      		cpc r21,r19
+ 444 003c 04F4      		brge .L19
+ 445               	.LVL37:
+ 446               	.LBB4:
+ 179:../src/rgb_sensor.c **** 				int16_t temp = meas[i];
+ 180:../src/rgb_sensor.c **** 				meas[i] = meas[j];
+ 447               		.loc 1 180 0
+ 448 003e 4D93      		st X+,r20
+ 449 0040 5C93      		st X,r21
+ 450 0042 1197      		sbiw r26,1
+ 181:../src/rgb_sensor.c **** 				meas[j] = temp;
+ 451               		.loc 1 181 0
+ 452 0044 2083      		st Z,r18
+ 453 0046 3183      		std Z+1,r19
+ 454               	.LVL38:
+ 455               	.L19:
+ 456               	.LBE4:
+ 177:../src/rgb_sensor.c **** 			if(meas[j] < meas[i]){
+ 457               		.loc 1 177 0 discriminator 2
+ 458 0048 9F5F      		subi r25,lo8(-(1))
+ 459               	.LVL39:
+ 460 004a 6913      		cpse r22,r25
+ 461 004c 00C0      		rjmp .L20
+ 462 004e 1296      		adiw r26,2
+ 463               	.LVL40:
+ 177:../src/rgb_sensor.c **** 			if(meas[j] < meas[i]){
+ 464               		.loc 1 177 0 is_stmt 0
+ 465 0050 8F5F      		subi r24,lo8(-(1))
+ 466               	.LVL41:
+ 467 0052 6813      		cpse r22,r24
+ 468 0054 00C0      		rjmp .L32
+ 469               	.LVL42:
+ 470               	.L18:
+ 471               	.LBE3:
+ 472               	.LBE2:
+ 182:../src/rgb_sensor.c **** 			}
+ 183:../src/rgb_sensor.c **** 		}
+ 184:../src/rgb_sensor.c **** 	}
+ 185:../src/rgb_sensor.c **** 	if(arr_len%2==0) return (meas[arr_len/2-1]+meas[arr_len/2])/2;
+ 473               		.loc 1 185 0 is_stmt 1
+ 474 0056 60FF      		sbrs r22,0
+ 475 0058 00C0      		rjmp .L24
+ 186:../src/rgb_sensor.c **** 	else return meas[arr_len/2];
+ 476               		.loc 1 186 0
+ 477 005a 6695      		lsr r22
+ 478               	.LVL43:
+ 479 005c 262F      		mov r18,r22
+ 480 005e 30E0      		ldi r19,0
+ 481 0060 220F      		lsl r18
+ 482 0062 331F      		rol r19
+ 483               	.LVL44:
+ 484 0064 FE01      		movw r30,r28
+ 485 0066 E20F      		add r30,r18
+ 486 0068 F31F      		adc r31,r19
+ 487 006a 8081      		ld r24,Z
+ 488 006c 9181      		ldd r25,Z+1
+ 489               	/* epilogue start */
+ 187:../src/rgb_sensor.c **** }...
+ 490               		.loc 1 187 0
+ 491 006e DF91      		pop r29
+ 492 0070 CF91      		pop r28
+ 493               	.LVL45:
+ 494 0072 0895      		ret
+ 495               	.LVL46:
+ 496               	.L24:
+ 185:../src/rgb_sensor.c **** 	if(arr_len%2==0) return (meas[arr_len/2-1]+meas[arr_len/2])/2;
+ 497               		.loc 1 185 0
+ 498 0074 6695      		lsr r22
+ 499               	.LVL47:
+ 500 0076 FE01      		movw r30,r28
+ 501 0078 E60F      		add r30,r22
+ 502 007a F11D      		adc r31,__zero_reg__
+ 503 007c E60F      		add r30,r22
+ 504 007e F11D      		adc r31,__zero_reg__
+ 505 0080 3297      		sbiw r30,2
+ 506 0082 2281      		ldd r18,Z+2
+ 507 0084 3381      		ldd r19,Z+3
+ 508 0086 8081      		ld r24,Z
+ 509 0088 9181      		ldd r25,Z+1
+ 510 008a 820F      		add r24,r18
+ 511 008c 931F      		adc r25,r19
+ 512 008e 97FD      		sbrc r25,7
+ 513 0090 00C0      		rjmp .L29
+ 514               	.L23:
+ 515 0092 9595      		asr r25
+ 516 0094 8795      		ror r24
+ 517               	/* epilogue start */
+ 518               		.loc 1 187 0
+ 519 0096 DF91      		pop r29
+ 520 0098 CF91      		pop r28
+ 521               	.LVL48:
+ 522 009a 0895      		ret
+ 523               	.LVL49:
+ 524               	.L30:
+ 173:../src/rgb_sensor.c **** 	if(arr_len==1) return meas[0];
+ 525               		.loc 1 173 0 discriminator 1
+ 526 009c 8881      		ld r24,Y
+ 527 009e 9981      		ldd r25,Y+1
+ 528               	.LVL50:
+ 529               	/* epilogue start */
+ 530               		.loc 1 187 0 discriminator 1
+ 531 00a0 DF91      		pop r29
+ 532 00a2 CF91      		pop r28
+ 533               	.LVL51:
+ 534 00a4 0895      		ret
+ 535               	.LVL52:
+ 536               	.L31:
+ 174:../src/rgb_sensor.c **** 	else if(arr_len==2) return (meas[0]+meas[1])/2;
+ 537               		.loc 1 174 0 discriminator 1
+ 538 00a6 2881      		ld r18,Y
+ 539 00a8 3981      		ldd r19,Y+1
+ 540 00aa 8A81      		ldd r24,Y+2
+ 541 00ac 9B81      		ldd r25,Y+3
+ 542               	.LVL53:
+ 543 00ae 820F      		add r24,r18
+ 544 00b0 931F      		adc r25,r19
+ 545 00b2 97FF      		sbrs r25,7
+ 546 00b4 00C0      		rjmp .L23
+ 547               	.LVL54:
+ 548               	.L29:
+ 185:../src/rgb_sensor.c **** 	if(arr_len%2==0) return (meas[arr_len/2-1]+meas[arr_len/2])/2;
+ 549               		.loc 1 185 0
+ 550 00b6 0196      		adiw r24,1
+ 551 00b8 00C0      		rjmp .L23
+ 552               		.cfi_endproc
+ 553               	.LFE37:
+ 555               		.section	.progmem.data.__c.4806,"a",@progbits
+ 558               	__c.4806:
+ 559 0000 5265 6164 		.string	"Read failed.\r\n"
+ 559      2066 6169 
+ 559      6C65 642E 
+ 559      0D0A 00
+ 560               		.section	.progmem.data.RGB_SENSE_POWERON_FAILURE,"a",@progbits
+ 563               	RGB_SENSE_POWERON_FAILURE:
+ 564 0000 5247 4220 		.string	"RGB sense power-on failed %u.\r\n"
+ 564      7365 6E73 
+ 564      6520 706F 
+ 564      7765 722D 
+ 564      6F6E 2066 
+ 565               		.comm	twi,2,1
+ 566               		.comm	twiMaster,25,1
+ 567               		.comm	rtc_epoch,2,1
+ 568               		.comm	droplet_ID,2,1
+ 569               		.text
+ 570               	.Letext0:
+ 571               		.file 2 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+ 572               		.file 3 "C:/Program Files (x86)/Atmel/Studio/7.0/packs/atmel/XMEGAA_DFP/1.1.68/include/avr/iox128a
+ 573               		.file 4 "../include/droplet_base.h"
+ 574               		.file 5 "../include/i2c.h"
+ 575               		.file 6 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+DEFINED SYMBOLS
+                            *ABS*:00000000 rgb_sensor.c
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:2      *ABS*:0000003e __SP_H__
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:3      *ABS*:0000003d __SP_L__
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:4      *ABS*:0000003f __SREG__
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:5      *ABS*:0000003b __RAMPZ__
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:6      *ABS*:00000034 __CCP__
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:7      *ABS*:00000000 __tmp_reg__
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:8      *ABS*:00000001 __zero_reg__
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:29     .text.rgbSensorInit:00000000 rgbSensorInit
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:563    .progmem.data.RGB_SENSE_POWERON_FAILURE:00000000 RGB_SENSE_POWERON_FAILURE
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:228    .text.getRGB:00000000 getRGB
+                            *COM*:00000002 twi
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:558    .progmem.data.__c.4806:00000000 __c.4806
+C:\Users\kedar\AppData\Local\Temp\ccki4s5T.s:384    .text.measFindMedian:00000000 measFindMedian
+                            *COM*:00000019 twiMaster
+                            *COM*:00000002 rtc_epoch
+                            *COM*:00000002 droplet_ID
+
+UNDEFINED SYMBOLS
+twiWriteWrapper
+printf_P
+twiWriteReadWrapper
+__do_copy_data
+__do_clear_bss

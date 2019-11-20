@@ -1,0 +1,1959 @@
+   1               		.file	"power.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__RAMPZ__ = 0x3b
+   6               	__CCP__ = 0x34
+   7               	__tmp_reg__ = 0
+   8               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  11               		.cfi_sections	.debug_frame
+  12               		.section	.text.enableLowPowerInterrupt,"ax",@progbits
+  13               	.global	enableLowPowerInterrupt
+  15               	enableLowPowerInterrupt:
+  16               	.LFB55:
+  17               		.file 1 "../src/power.c"
+   1:../src/power.c **** #include "power.h"
+   2:../src/power.c **** 
+   3:../src/power.c **** void powerInit()
+   4:../src/power.c **** {
+   5:../src/power.c **** 	capMonitorInit();
+   6:../src/power.c **** 	legMonitorInit();
+   7:../src/power.c **** }
+   8:../src/power.c **** 
+   9:../src/power.c **** void capMonitorInit(){
+  10:../src/power.c **** 	PORTB.DIRCLR = PIN0_bm | PIN1_bm;
+  11:../src/power.c **** 
+  12:../src/power.c **** 	PORTB.PIN0CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  13:../src/power.c **** 	PORTB.PIN1CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  14:../src/power.c **** 
+  15:../src/power.c **** 	ACB.CTRLB = 14; //This sets the scaling of Vcc used in the comparison, to roughly (ACB.CTRLB+1)*(0
+  16:../src/power.c **** 	ACB.AC0MUXCTRL = AC_MUXPOS_PIN1_gc | AC_MUXNEG_SCALER_gc; //this sets the (-) part of the comparis
+  17:../src/power.c **** 
+  18:../src/power.c **** 	ACB.AC0CTRL = AC_ENABLE_bm;
+  19:../src/power.c **** 	#ifdef FIX_UNPOWERED_STATE
+  20:../src/power.c **** 		unpoweredFixActive = 0;
+  21:../src/power.c **** 		scheduleTask(1000, enableLowPowerInterrupt, NULL);
+  22:../src/power.c **** 	#endif
+  23:../src/power.c **** 	delay_us(1);
+  24:../src/power.c **** }
+  25:../src/power.c **** 
+  26:../src/power.c **** void enableLowPowerInterrupt(){
+  18               		.loc 1 26 0
+  19               		.cfi_startproc
+  20               	/* prologue: function */
+  21               	/* frame size = 0 */
+  22               	/* stack size = 0 */
+  23               	.L__stack_usage = 0
+  27:../src/power.c **** 	ACB.AC0CTRL |= AC_INTMODE_BOTHEDGES_gc | AC_INTLVL_MED_gc | AC_HYSMODE_LARGE_gc;
+  24               		.loc 1 27 0
+  25 0000 E0E9      		ldi r30,lo8(-112)
+  26 0002 F3E0      		ldi r31,lo8(3)
+  27 0004 8081      		ld r24,Z
+  28 0006 8462      		ori r24,lo8(36)
+  29 0008 8083      		st Z,r24
+  30 000a 0895      		ret
+  31               		.cfi_endproc
+  32               	.LFE55:
+  34               		.section	.text.stopLowPowerMoveTask,"ax",@progbits
+  35               	.global	stopLowPowerMoveTask
+  37               	stopLowPowerMoveTask:
+  38               	.LFB63:
+  28:../src/power.c **** }
+  29:../src/power.c **** 
+  30:../src/power.c **** void disableLowPowerInterrupt(){
+  31:../src/power.c **** 	ACB.AC0CTRL &= ~(AC_INTMODE_BOTHEDGES_gc | AC_INTLVL_MED_gc | AC_HYSMODE_LARGE_gc);
+  32:../src/power.c **** }
+  33:../src/power.c **** 
+  34:../src/power.c **** void legMonitorInit(){
+  35:../src/power.c **** 	PORTA.DIRCLR = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm | PIN4_bm;
+  36:../src/power.c **** 	
+  37:../src/power.c **** 	PORTA.PIN0CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  38:../src/power.c **** 	PORTA.PIN1CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  39:../src/power.c **** 	PORTA.PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  40:../src/power.c **** 	PORTA.PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  41:../src/power.c **** 	PORTA.PIN4CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  42:../src/power.c **** 	
+  43:../src/power.c **** 	ACA.WINCTRL = AC_WEN_bm;					// Enable window mode
+  44:../src/power.c **** 	
+  45:../src/power.c **** 	ACA.AC0MUXCTRL = AC_MUXNEG_PIN0_gc; //VREF_HI
+  46:../src/power.c **** 	ACA.AC1MUXCTRL = AC_MUXNEG_PIN1_gc; //VREF_LO
+  47:../src/power.c **** 	
+  48:../src/power.c **** 	ACA.AC0CTRL = AC_HSMODE_bm | AC_ENABLE_bm; //The comparators take up to 500ns in low-power mode an
+  49:../src/power.c **** 	ACA.AC1CTRL = AC_HSMODE_bm | AC_ENABLE_bm;	//The comparators take up to 500ns in low-power mode an
+  50:../src/power.c **** 	delay_us(1);
+  51:../src/power.c **** 	
+  52:../src/power.c **** }
+  53:../src/power.c **** 
+  54:../src/power.c **** //Returns '1' if cap is powered, and '0' otherwise.
+  55:../src/power.c **** uint8_t capStatus(){
+  56:../src/power.c **** 	
+  57:../src/power.c **** 	return ((ACB.STATUS & AC_AC0STATE_bm)>>4);
+  58:../src/power.c **** /*
+  59:../src/power.c **** 	switch (ACB.STATUS & AC_WSTATE_gm)
+  60:../src/power.c **** 	{
+  61:../src/power.c **** 		case AC_WSTATE_ABOVE_gc:  return 1;
+  62:../src/power.c **** 		case AC_WSTATE_INSIDE_gc: return 0;
+  63:../src/power.c **** 		case AC_WSTATE_BELOW_gc:  return -1;
+  64:../src/power.c **** 	}
+  65:../src/power.c **** 	return -2;
+  66:../src/power.c **** 	*/
+  67:../src/power.c **** }
+  68:../src/power.c **** 
+  69:../src/power.c **** int8_t legStatus(uint8_t leg){
+  70:../src/power.c **** 	uint8_t status;
+  71:../src/power.c **** 	uint8_t muxPinMask;
+  72:../src/power.c **** 	switch(leg){
+  73:../src/power.c **** 		case 0: muxPinMask = AC_MUXPOS_PIN2_gc; break;
+  74:../src/power.c **** 		case 1: muxPinMask = AC_MUXPOS_PIN3_gc; break;
+  75:../src/power.c **** 		case 2: muxPinMask = AC_MUXPOS_PIN4_gc; break;
+  76:../src/power.c **** 		default: muxPinMask = AC_MUXPOS_PIN0_gc; //should never happen
+  77:../src/power.c **** 	}
+  78:../src/power.c **** 	ACA.AC0MUXCTRL |= muxPinMask;
+  79:../src/power.c **** 	ACA.AC1MUXCTRL |= muxPinMask;
+  80:../src/power.c **** 	busy_delay_ns(150); //In high-power mode, the comparators take up to 110ns to update after changin
+  81:../src/power.c **** 	//busy_delay_ns(500); //In low-power mode, the comparators take up to 500ns to update after changi
+  82:../src/power.c **** 	status = ACA.STATUS;
+  83:../src/power.c **** 	ACA.AC0MUXCTRL &= AC_MUXPOS_PIN0_gc;
+  84:../src/power.c **** 	ACA.AC1MUXCTRL &= AC_MUXPOS_PIN0_gc;
+  85:../src/power.c **** 	switch (status & AC_WSTATE_gm){
+  86:../src/power.c **** 		case AC_WSTATE_ABOVE_gc:	return 1;
+  87:../src/power.c **** 		case AC_WSTATE_INSIDE_gc:	return 0;
+  88:../src/power.c **** 		case AC_WSTATE_BELOW_gc:	return -1;
+  89:../src/power.c **** 		default:					return 127;
+  90:../src/power.c **** 	}
+  91:../src/power.c **** }
+  92:../src/power.c **** 
+  93:../src/power.c **** uint8_t legsPowered(){
+  94:../src/power.c **** 	int8_t leg0status = legStatus(0);
+  95:../src/power.c **** 	int8_t leg1status = legStatus(1);
+  96:../src/power.c **** 	int8_t leg2status = legStatus(2);
+  97:../src/power.c **** 	uint8_t someLegsHigh = (leg0status==1) || (leg1status==1) || (leg2status==1);
+  98:../src/power.c **** 	uint8_t someLegsLow = (leg0status==-1) || (leg1status==-1) || (leg2status==-1);
+  99:../src/power.c **** 	return (someLegsHigh && someLegsLow);
+ 100:../src/power.c **** }
+ 101:../src/power.c **** 
+ 102:../src/power.c **** uint8_t legsFloating(){
+ 103:../src/power.c **** 	int8_t leg0status = legStatus(0);
+ 104:../src/power.c **** 	int8_t leg1status = legStatus(1);
+ 105:../src/power.c **** 	int8_t leg2status = legStatus(2);
+ 106:../src/power.c **** 	return !(leg0status || leg1status || leg2status);
+ 107:../src/power.c **** }
+ 108:../src/power.c **** 
+ 109:../src/power.c **** #ifdef FIX_UNPOWERED_STATE
+ 110:../src/power.c **** 
+ 111:../src/power.c **** void checkLegsTask(){
+ 112:../src/power.c **** 	if(!unpoweredFixActive){
+ 113:../src/power.c **** 		return;
+ 114:../src/power.c **** 	}
+ 115:../src/power.c **** 	if(legsPowered()){
+ 116:../src/power.c **** 		unpoweredFixActive = 0; //Nothing left to do.
+ 117:../src/power.c **** 	}else if(legsFloating()){
+ 118:../src/power.c **** 		unpoweredFixActive = 0; //Problem isn't resolved, but it seems like we simply aren't on the floor
+ 119:../src/power.c **** 	}else{
+ 120:../src/power.c **** 		//Lets move the Droplet to try and fix things.
+ 121:../src/power.c **** 		if(failedLegChecks < 4){
+ 122:../src/power.c **** 			//At first, we're going to use the calibrated motor values:
+ 123:../src/power.c **** 			moveSteps(6,50);
+ 124:../src/power.c **** 		}else if(failedLegChecks < 8){ 
+ 125:../src/power.c **** 			//Assuming at this point that this Droplet hasn't been calibrated, so we're using progressively 
+ 126:../src/power.c **** 			//larger and flipped guesses at calibrated motor values.
+ 127:../src/power.c **** 			int16_t adj[3];
+ 128:../src/power.c **** 			ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+ 129:../src/power.c **** 				adj[0] = motorAdjusts[6][0];
+ 130:../src/power.c **** 				adj[1] = motorAdjusts[6][1];
+ 131:../src/power.c **** 				adj[2] = motorAdjusts[6][2];
+ 132:../src/power.c **** 				//The equation below should cause the temporary motor adjustment values to alternate between po
+ 133:../src/power.c **** 				motorAdjusts[6][0] = ((int16_t)pow(-1, failedLegChecks-5))*(1000 + (((failedLegChecks - 5)/2)*5
+ 134:../src/power.c **** 				motorAdjusts[6][1] = ((int16_t)pow(-1, failedLegChecks-5))*(1000 + (((failedLegChecks - 5)/2)*5
+ 135:../src/power.c **** 				motorAdjusts[6][2] = ((int16_t)pow(-1, failedLegChecks-5))*(1000 + (((failedLegChecks - 5)/2)*5
+ 136:../src/power.c **** 			}
+ 137:../src/power.c **** 			moveSteps(6,50);
+ 138:../src/power.c **** 			ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+ 139:../src/power.c **** 				motorAdjusts[6][0] = adj[0];
+ 140:../src/power.c **** 				motorAdjusts[6][1] = adj[1];
+ 141:../src/power.c **** 				motorAdjusts[6][2] = adj[2];
+ 142:../src/power.c **** 			}
+ 143:../src/power.c **** 		}else{
+ 144:../src/power.c **** 			unpoweredFixActive = 0;
+ 145:../src/power.c **** 		}
+ 146:../src/power.c **** 		scheduleTask(150, stopLowPowerMoveTask, NULL);
+ 147:../src/power.c **** 		failedLegChecks++;
+ 148:../src/power.c **** 	}
+ 149:../src/power.c **** }
+ 150:../src/power.c **** 
+ 151:../src/power.c **** void stopLowPowerMoveTask(){
+  39               		.loc 1 151 0
+  40               		.cfi_startproc
+  41               	/* prologue: function */
+  42               	/* frame size = 0 */
+  43               	/* stack size = 0 */
+  44               	.L__stack_usage = 0
+ 152:../src/power.c **** 	stopMove();
+  45               		.loc 1 152 0
+  46 0000 0E94 0000 		call stopMove
+  47               	.LVL0:
+ 153:../src/power.c **** 	if(!unpoweredFixActive){
+  48               		.loc 1 153 0
+  49 0004 8091 0000 		lds r24,unpoweredFixActive
+  50 0008 8111      		cpse r24,__zero_reg__
+  51 000a 00C0      		rjmp .L8
+  52 000c 0895      		ret
+  53               	.L8:
+  54               	.LBB249:
+  55               	.LBB250:
+ 154:../src/power.c **** 		return;
+ 155:../src/power.c **** 	}	
+ 156:../src/power.c **** 	scheduleTask(50, checkLegsTask, NULL);
+  56               		.loc 1 156 0
+  57 000e 20E0      		ldi r18,0
+  58 0010 30E0      		ldi r19,0
+  59 0012 40E0      		ldi r20,lo8(gs(checkLegsTask))
+  60 0014 50E0      		ldi r21,hi8(gs(checkLegsTask))
+  61 0016 62E3      		ldi r22,lo8(50)
+  62 0018 70E0      		ldi r23,0
+  63 001a 80E0      		ldi r24,0
+  64 001c 90E0      		ldi r25,0
+  65 001e 0E94 0000 		call scheduleTask
+  66               	.LVL1:
+  67 0022 0895      		ret
+  68               	.LBE250:
+  69               	.LBE249:
+  70               		.cfi_endproc
+  71               	.LFE63:
+  73               		.section	.text.capMonitorInit,"ax",@progbits
+  74               	.global	capMonitorInit
+  76               	capMonitorInit:
+  77               	.LFB54:
+   9:../src/power.c **** 	PORTB.DIRCLR = PIN0_bm | PIN1_bm;
+  78               		.loc 1 9 0
+  79               		.cfi_startproc
+  80               	/* prologue: function */
+  81               	/* frame size = 0 */
+  82               	/* stack size = 0 */
+  83               	.L__stack_usage = 0
+  10:../src/power.c **** 
+  84               		.loc 1 10 0
+  85 0000 E0E2      		ldi r30,lo8(32)
+  86 0002 F6E0      		ldi r31,lo8(6)
+  87 0004 83E0      		ldi r24,lo8(3)
+  88 0006 8283      		std Z+2,r24
+  12:../src/power.c **** 	PORTB.PIN1CTRL = PORT_ISC_INPUT_DISABLE_gc;
+  89               		.loc 1 12 0
+  90 0008 87E0      		ldi r24,lo8(7)
+  91 000a 808B      		std Z+16,r24
+  13:../src/power.c **** 
+  92               		.loc 1 13 0
+  93 000c 818B      		std Z+17,r24
+  15:../src/power.c **** 	ACB.AC0MUXCTRL = AC_MUXPOS_PIN1_gc | AC_MUXNEG_SCALER_gc; //this sets the (-) part of the comparis
+  94               		.loc 1 15 0
+  95 000e E0E9      		ldi r30,lo8(-112)
+  96 0010 F3E0      		ldi r31,lo8(3)
+  97 0012 8EE0      		ldi r24,lo8(14)
+  98 0014 8583      		std Z+5,r24
+  16:../src/power.c **** 
+  99               		.loc 1 16 0
+ 100 0016 8FE0      		ldi r24,lo8(15)
+ 101 0018 8283      		std Z+2,r24
+  18:../src/power.c **** 	#ifdef FIX_UNPOWERED_STATE
+ 102               		.loc 1 18 0
+ 103 001a 81E0      		ldi r24,lo8(1)
+ 104 001c 8083      		st Z,r24
+  20:../src/power.c **** 		scheduleTask(1000, enableLowPowerInterrupt, NULL);
+ 105               		.loc 1 20 0
+ 106 001e 1092 0000 		sts unpoweredFixActive,__zero_reg__
+  21:../src/power.c **** 	#endif
+ 107               		.loc 1 21 0
+ 108 0022 20E0      		ldi r18,0
+ 109 0024 30E0      		ldi r19,0
+ 110 0026 40E0      		ldi r20,lo8(gs(enableLowPowerInterrupt))
+ 111 0028 50E0      		ldi r21,hi8(gs(enableLowPowerInterrupt))
+ 112 002a 68EE      		ldi r22,lo8(-24)
+ 113 002c 73E0      		ldi r23,lo8(3)
+ 114 002e 80E0      		ldi r24,0
+ 115 0030 90E0      		ldi r25,0
+ 116 0032 0E94 0000 		call scheduleTask
+ 117               	.LVL2:
+ 118               	.LBB251:
+ 119               	.LBB252:
+ 120               	.LBB253:
+ 121               		.file 2 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+   1:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /* Copyright (c) 2002, Marek Michalkiewicz
+   2:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Copyright (c) 2004,2005,2007 Joerg Wunsch
+   3:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Copyright (c) 2007  Florin-Viorel Petrov
+   4:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    All rights reserved.
+   5:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+   6:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Redistribution and use in source and binary forms, with or without
+   7:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    modification, are permitted provided that the following conditions are met:
+   8:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+   9:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    * Redistributions of source code must retain the above copyright
+  10:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      notice, this list of conditions and the following disclaimer.
+  11:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  12:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    * Redistributions in binary form must reproduce the above copyright
+  13:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      notice, this list of conditions and the following disclaimer in
+  14:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      the documentation and/or other materials provided with the
+  15:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      distribution.
+  16:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  17:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    * Neither the name of the copyright holders nor the names of
+  18:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      contributors may be used to endorse or promote products derived
+  19:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****      from this software without specific prior written permission.
+  20:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  21:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  22:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  23:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  24:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  25:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  26:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  27:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  28:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  29:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  30:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  31:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   POSSIBILITY OF SUCH DAMAGE. */
+  32:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  33:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /* $Id$ */
+  34:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  35:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef _UTIL_DELAY_H_
+  36:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #define _UTIL_DELAY_H_ 1
+  37:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  38:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef __DOXYGEN__
+  39:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #  ifndef __HAS_DELAY_CYCLES
+  40:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #    define __HAS_DELAY_CYCLES 1
+  41:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #  endif
+  42:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif  /* __DOXYGEN__ */
+  43:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  44:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #include <inttypes.h>
+  45:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #include <util/delay_basic.h>
+  46:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #include <math.h>
+  47:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  48:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /** \file */
+  49:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /** \defgroup util_delay <util/delay.h>: Convenience functions for busy-wait delay loops
+  50:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \code
+  51:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     #define F_CPU 1000000UL  // 1 MHz
+  52:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     //#define F_CPU 14.7456E6
+  53:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     #include <util/delay.h>
+  54:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \endcode
+  55:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  56:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \note As an alternative method, it is possible to pass the
+  57:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     F_CPU macro down to the compiler from the Makefile.
+  58:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     Obviously, in that case, no \c \#define statement should be
+  59:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     used.
+  60:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  61:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     The functions in this header file are wrappers around the basic
+  62:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     busy-wait functions from <util/delay_basic.h>.  They are meant as
+  63:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     convenience functions where actual time values can be specified
+  64:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     rather than a number of cycles to wait for.  The idea behind is
+  65:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     that compile-time constant expressions will be eliminated by
+  66:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     compiler optimization so floating-point expressions can be used
+  67:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     to calculate the number of delay cycles needed based on the CPU
+  68:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     frequency passed by the macro F_CPU.
+  69:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \note In order for these functions to work as intended, compiler
+  71:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     optimizations <em>must</em> be enabled, and the delay time
+  72:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     <em>must</em> be an expression that is a known constant at
+  73:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     compile-time.  If these requirements are not met, the resulting
+  74:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     delay will be much longer (and basically unpredictable), and
+  75:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     applications that otherwise do not use floating-point calculations
+  76:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     will experience severe code bloat by the floating-point library
+  77:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     routines linked into the application.
+  78:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  79:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     The functions available allow the specification of microsecond, and
+  80:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     millisecond delays directly, using the application-supplied macro
+  81:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     F_CPU as the CPU clock frequency (in Hertz).
+  82:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  83:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** */
+  84:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  85:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if !defined(__DOXYGEN__)
+  86:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** static __inline__ void _delay_us(double __us) __attribute__((__always_inline__));
+  87:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** static __inline__ void _delay_ms(double __ms) __attribute__((__always_inline__));
+  88:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+  89:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  90:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef F_CPU
+  91:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /* prevent compiler error by supplying a default */
+  92:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** # warning "F_CPU not defined for <util/delay.h>"
+  93:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /** \ingroup util_delay
+  94:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \def F_CPU
+  95:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     \brief CPU frequency in Hz
+  96:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+  97:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     The macro F_CPU specifies the CPU frequency to be considered by
+  98:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     the delay macros.  This macro is normally supplied by the
+  99:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     environment (e.g. from within a project header, or the project's
+ 100:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     Makefile).  The value 1 MHz here is only provided as a "vanilla"
+ 101:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     fallback if no such user-provided definition could be found.
+ 102:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 103:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     In terms of the delay functions, the CPU frequency can be given as
+ 104:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     a floating-point constant (e.g. 3.6864E6 for 3.6864 MHz).
+ 105:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     However, the macros in <util/setbaud.h> require it to be an
+ 106:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****     integer value.
+ 107:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****  */
+ 108:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** # define F_CPU 1000000UL
+ 109:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 110:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 111:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #ifndef __OPTIMIZE__
+ 112:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** # warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+ 113:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 114:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 115:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 116:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 117:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   __STDC_HOSTED__
+ 118:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #  include <math.h>
+ 119:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 120:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 121:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /**
+ 122:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \ingroup util_delay
+ 123:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 124:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Perform a delay of \c __ms milliseconds, using _delay_loop_2().
+ 125:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 126:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The macro F_CPU is supposed to be defined to a
+ 127:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 128:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 129:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The maximal possible delay is 262.14 ms / F_CPU in MHz.
+ 130:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 131:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    When the user request delay which exceed the maximum possible one,
+ 132:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    _delay_ms() provides a decreased resolution functionality. In this
+ 133:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    mode _delay_ms() will work with a resolution of 1/10 ms, providing
+ 134:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    delays up to 6.5535 seconds (independent from CPU frequency).  The
+ 135:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    user will not be informed about decreased resolution.
+ 136:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 137:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles()
+ 138:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    support, maximal possible delay is 4294967.295 ms/ F_CPU in MHz. For
+ 139:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    values greater than the maximal possible delay, overflows results in
+ 140:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    no delay i.e., 0ms.
+ 141:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 142:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Conversion of \c __ms into clock cycles may not always result in
+ 143:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer.  By default, the clock cycles rounded up to next
+ 144:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer. This ensures that the user gets at least \c __ms
+ 145:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    microseconds of delay.
+ 146:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 147:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Alternatively, by defining the macro \c __DELAY_ROUND_DOWN__, or
+ 148:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c __DELAY_ROUND_CLOSEST__, before including this header file, the
+ 149:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    algorithm can be made to round down, or round to closest integer,
+ 150:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    respectively.
+ 151:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 152:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \note
+ 153:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 154:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The implementation of _delay_ms() based on
+ 155:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    __builtin_avr_delay_cycles() is not backward compatible with older
+ 156:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    implementations.  In order to get functionality backward compatible
+ 157:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    with previous versions, the macro \c "__DELAY_BACKWARD_COMPATIBLE__"
+ 158:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    must be defined before including this header file. Also, the
+ 159:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    backward compatible algorithm will be chosen if the code is
+ 160:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    compiled in a <em>freestanding environment</em> (GCC option
+ 161:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c -ffreestanding), as the math functions required for rounding are
+ 162:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    not available to the compiler then.
+ 163:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 164:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****  */
+ 165:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** void
+ 166:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** _delay_ms(double __ms)
+ 167:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** {
+ 168:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	double __tmp ;
+ 169:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 170:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 171:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   __STDC_HOSTED__
+ 172:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	uint32_t __ticks_dc;
+ 173:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 174:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__tmp = ((F_CPU) / 1e3) * __ms;
+ 175:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 176:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 177:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 178:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 179:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 180:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 181:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 182:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#else
+ 183:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		//round up by default
+ 184:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 185:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#endif
+ 186:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 187:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+ 188:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 189:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #else
+ 190:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	uint16_t __ticks;
+ 191:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__tmp = ((F_CPU) / 4e3) * __ms;
+ 192:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	if (__tmp < 1.0)
+ 193:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks = 1;
+ 194:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	else if (__tmp > 65535)
+ 195:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	{
+ 196:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		//	__ticks = requested delay in 1/10 ms
+ 197:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks = (uint16_t) (__ms * 10.0);
+ 198:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		while(__ticks)
+ 199:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		{
+ 200:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 			// wait 1/10 ms
+ 201:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 			_delay_loop_2(((F_CPU) / 4e3) / 10);
+ 202:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 			__ticks --;
+ 203:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		}
+ 204:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		return;
+ 205:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	}
+ 206:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	else
+ 207:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks = (uint16_t)__tmp;
+ 208:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	_delay_loop_2(__ticks);
+ 209:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #endif
+ 210:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** }
+ 211:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 212:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** /**
+ 213:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \ingroup util_delay
+ 214:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 215:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Perform a delay of \c __us microseconds, using _delay_loop_1().
+ 216:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 217:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The macro F_CPU is supposed to be defined to a
+ 218:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 219:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 220:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The maximal possible delay is 768 us / F_CPU in MHz.
+ 221:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 222:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    If the user requests a delay greater than the maximal possible one,
+ 223:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    _delay_us() will automatically call _delay_ms() instead.  The user
+ 224:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    will not be informed about this case.
+ 225:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 226:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles()
+ 227:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    support, maximal possible delay is 4294967.295 us/ F_CPU in MHz. For
+ 228:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    values greater than the maximal possible delay, overflow results in
+ 229:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    no delay i.e., 0us.
+ 230:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 231:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Conversion of \c __us into clock cycles may not always result in
+ 232:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer.  By default, the clock cycles rounded up to next
+ 233:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    integer. This ensures that the user gets at least \c __us
+ 234:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    microseconds of delay.
+ 235:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 236:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    Alternatively, by defining the macro \c __DELAY_ROUND_DOWN__, or
+ 237:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c __DELAY_ROUND_CLOSEST__, before including this header file, the
+ 238:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    algorithm can be made to round down, or round to closest integer,
+ 239:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    respectively.
+ 240:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 241:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \note
+ 242:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 243:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    The implementation of _delay_ms() based on
+ 244:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    __builtin_avr_delay_cycles() is not backward compatible with older
+ 245:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    implementations.  In order to get functionality backward compatible
+ 246:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    with previous versions, the macro \c __DELAY_BACKWARD_COMPATIBLE__
+ 247:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    must be defined before including this header file. Also, the
+ 248:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    backward compatible algorithm will be chosen if the code is
+ 249:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    compiled in a <em>freestanding environment</em> (GCC option
+ 250:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    \c -ffreestanding), as the math functions required for rounding are
+ 251:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****    not available to the compiler then.
+ 252:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 253:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****  */
+ 254:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** void
+ 255:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** _delay_us(double __us)
+ 256:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** {
+ 257:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	double __tmp ;
+ 258:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 259:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 260:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h ****   __STDC_HOSTED__
+ 261:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	uint32_t __ticks_dc;
+ 262:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 263:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__tmp = ((F_CPU) / 1e6) * __us;
+ 264:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 265:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 266:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 267:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 268:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 269:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 270:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 271:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#else
+ 272:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		//round up by default
+ 273:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 274:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	#endif
+ 275:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 
+ 276:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+ 122               		.loc 2 276 0
+ 123 0036 8AE0      		ldi r24,lo8(10)
+ 124 0038 8A95      	1:	dec r24
+ 125 003a 01F4      		brne 1b
+ 126 003c 00C0      		rjmp .
+ 127               	.LVL3:
+ 128 003e 0895      		ret
+ 129               	.LBE253:
+ 130               	.LBE252:
+ 131               	.LBE251:
+ 132               		.cfi_endproc
+ 133               	.LFE54:
+ 135               		.section	.text.powerInit,"ax",@progbits
+ 136               	.global	powerInit
+ 138               	powerInit:
+ 139               	.LFB53:
+   4:../src/power.c **** 	capMonitorInit();
+ 140               		.loc 1 4 0
+ 141               		.cfi_startproc
+ 142               	/* prologue: function */
+ 143               	/* frame size = 0 */
+ 144               	/* stack size = 0 */
+ 145               	.L__stack_usage = 0
+   5:../src/power.c **** 	legMonitorInit();
+ 146               		.loc 1 5 0
+ 147 0000 0E94 0000 		call capMonitorInit
+ 148               	.LVL4:
+ 149               	.LBB254:
+ 150               	.LBB255:
+  35:../src/power.c **** 	
+ 151               		.loc 1 35 0
+ 152 0004 E0E0      		ldi r30,0
+ 153 0006 F6E0      		ldi r31,lo8(6)
+ 154 0008 8FE1      		ldi r24,lo8(31)
+ 155 000a 8283      		std Z+2,r24
+  37:../src/power.c **** 	PORTA.PIN1CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 156               		.loc 1 37 0
+ 157 000c 87E0      		ldi r24,lo8(7)
+ 158 000e 808B      		std Z+16,r24
+  38:../src/power.c **** 	PORTA.PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 159               		.loc 1 38 0
+ 160 0010 818B      		std Z+17,r24
+  39:../src/power.c **** 	PORTA.PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 161               		.loc 1 39 0
+ 162 0012 828B      		std Z+18,r24
+  40:../src/power.c **** 	PORTA.PIN4CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 163               		.loc 1 40 0
+ 164 0014 838B      		std Z+19,r24
+  41:../src/power.c **** 	
+ 165               		.loc 1 41 0
+ 166 0016 848B      		std Z+20,r24
+  43:../src/power.c **** 	
+ 167               		.loc 1 43 0
+ 168 0018 E0E8      		ldi r30,lo8(-128)
+ 169 001a F3E0      		ldi r31,lo8(3)
+ 170 001c 80E1      		ldi r24,lo8(16)
+ 171 001e 8683      		std Z+6,r24
+  45:../src/power.c **** 	ACA.AC1MUXCTRL = AC_MUXNEG_PIN1_gc; //VREF_LO
+ 172               		.loc 1 45 0
+ 173 0020 1282      		std Z+2,__zero_reg__
+  46:../src/power.c **** 	
+ 174               		.loc 1 46 0
+ 175 0022 81E0      		ldi r24,lo8(1)
+ 176 0024 8383      		std Z+3,r24
+  48:../src/power.c **** 	ACA.AC1CTRL = AC_HSMODE_bm | AC_ENABLE_bm;	//The comparators take up to 500ns in low-power mode an
+ 177               		.loc 1 48 0
+ 178 0026 89E0      		ldi r24,lo8(9)
+ 179 0028 8083      		st Z,r24
+  49:../src/power.c **** 	delay_us(1);
+ 180               		.loc 1 49 0
+ 181 002a 8183      		std Z+1,r24
+ 182               	.LVL5:
+ 183               	.LBB256:
+ 184               	.LBB257:
+ 185               	.LBB258:
+ 186               		.loc 2 276 0
+ 187 002c 8AE0      		ldi r24,lo8(10)
+ 188 002e 8A95      	1:	dec r24
+ 189 0030 01F4      		brne 1b
+ 190 0032 00C0      		rjmp .
+ 191               	.LVL6:
+ 192 0034 0895      		ret
+ 193               	.LBE258:
+ 194               	.LBE257:
+ 195               	.LBE256:
+ 196               	.LBE255:
+ 197               	.LBE254:
+ 198               		.cfi_endproc
+ 199               	.LFE53:
+ 201               		.section	.text.disableLowPowerInterrupt,"ax",@progbits
+ 202               	.global	disableLowPowerInterrupt
+ 204               	disableLowPowerInterrupt:
+ 205               	.LFB56:
+  30:../src/power.c **** 	ACB.AC0CTRL &= ~(AC_INTMODE_BOTHEDGES_gc | AC_INTLVL_MED_gc | AC_HYSMODE_LARGE_gc);
+ 206               		.loc 1 30 0
+ 207               		.cfi_startproc
+ 208               	/* prologue: function */
+ 209               	/* frame size = 0 */
+ 210               	/* stack size = 0 */
+ 211               	.L__stack_usage = 0
+  31:../src/power.c **** }
+ 212               		.loc 1 31 0
+ 213 0000 E0E9      		ldi r30,lo8(-112)
+ 214 0002 F3E0      		ldi r31,lo8(3)
+ 215 0004 8081      		ld r24,Z
+ 216 0006 8B7D      		andi r24,lo8(-37)
+ 217 0008 8083      		st Z,r24
+ 218 000a 0895      		ret
+ 219               		.cfi_endproc
+ 220               	.LFE56:
+ 222               		.section	.text.legMonitorInit,"ax",@progbits
+ 223               	.global	legMonitorInit
+ 225               	legMonitorInit:
+ 226               	.LFB57:
+  34:../src/power.c **** 	PORTA.DIRCLR = PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm | PIN4_bm;
+ 227               		.loc 1 34 0
+ 228               		.cfi_startproc
+ 229               	/* prologue: function */
+ 230               	/* frame size = 0 */
+ 231               	/* stack size = 0 */
+ 232               	.L__stack_usage = 0
+  35:../src/power.c **** 	
+ 233               		.loc 1 35 0
+ 234 0000 E0E0      		ldi r30,0
+ 235 0002 F6E0      		ldi r31,lo8(6)
+ 236 0004 8FE1      		ldi r24,lo8(31)
+ 237 0006 8283      		std Z+2,r24
+  37:../src/power.c **** 	PORTA.PIN1CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 238               		.loc 1 37 0
+ 239 0008 87E0      		ldi r24,lo8(7)
+ 240 000a 808B      		std Z+16,r24
+  38:../src/power.c **** 	PORTA.PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 241               		.loc 1 38 0
+ 242 000c 818B      		std Z+17,r24
+  39:../src/power.c **** 	PORTA.PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 243               		.loc 1 39 0
+ 244 000e 828B      		std Z+18,r24
+  40:../src/power.c **** 	PORTA.PIN4CTRL = PORT_ISC_INPUT_DISABLE_gc;
+ 245               		.loc 1 40 0
+ 246 0010 838B      		std Z+19,r24
+  41:../src/power.c **** 	
+ 247               		.loc 1 41 0
+ 248 0012 848B      		std Z+20,r24
+  43:../src/power.c **** 	
+ 249               		.loc 1 43 0
+ 250 0014 E0E8      		ldi r30,lo8(-128)
+ 251 0016 F3E0      		ldi r31,lo8(3)
+ 252 0018 80E1      		ldi r24,lo8(16)
+ 253 001a 8683      		std Z+6,r24
+  45:../src/power.c **** 	ACA.AC1MUXCTRL = AC_MUXNEG_PIN1_gc; //VREF_LO
+ 254               		.loc 1 45 0
+ 255 001c 1282      		std Z+2,__zero_reg__
+  46:../src/power.c **** 	
+ 256               		.loc 1 46 0
+ 257 001e 81E0      		ldi r24,lo8(1)
+ 258 0020 8383      		std Z+3,r24
+  48:../src/power.c **** 	ACA.AC1CTRL = AC_HSMODE_bm | AC_ENABLE_bm;	//The comparators take up to 500ns in low-power mode an
+ 259               		.loc 1 48 0
+ 260 0022 89E0      		ldi r24,lo8(9)
+ 261 0024 8083      		st Z,r24
+  49:../src/power.c **** 	delay_us(1);
+ 262               		.loc 1 49 0
+ 263 0026 8183      		std Z+1,r24
+ 264               	.LVL7:
+ 265               	.LBB259:
+ 266               	.LBB260:
+ 267               	.LBB261:
+ 268               		.loc 2 276 0
+ 269 0028 8AE0      		ldi r24,lo8(10)
+ 270 002a 8A95      	1:	dec r24
+ 271 002c 01F4      		brne 1b
+ 272 002e 00C0      		rjmp .
+ 273               	.LVL8:
+ 274 0030 0895      		ret
+ 275               	.LBE261:
+ 276               	.LBE260:
+ 277               	.LBE259:
+ 278               		.cfi_endproc
+ 279               	.LFE57:
+ 281               		.section	.text.capStatus,"ax",@progbits
+ 282               	.global	capStatus
+ 284               	capStatus:
+ 285               	.LFB58:
+  55:../src/power.c **** 	
+ 286               		.loc 1 55 0
+ 287               		.cfi_startproc
+ 288               	/* prologue: function */
+ 289               	/* frame size = 0 */
+ 290               	/* stack size = 0 */
+ 291               	.L__stack_usage = 0
+  57:../src/power.c **** /*
+ 292               		.loc 1 57 0
+ 293 0000 8091 9703 		lds r24,919
+  67:../src/power.c **** 
+ 294               		.loc 1 67 0
+ 295 0004 8295      		swap r24
+ 296 0006 8170      		andi r24,1
+ 297 0008 0895      		ret
+ 298               		.cfi_endproc
+ 299               	.LFE58:
+ 301               		.section	.text.legStatus,"ax",@progbits
+ 302               	.global	legStatus
+ 304               	legStatus:
+ 305               	.LFB59:
+  69:../src/power.c **** 	uint8_t status;
+ 306               		.loc 1 69 0
+ 307               		.cfi_startproc
+ 308               	.LVL9:
+ 309               	/* prologue: function */
+ 310               	/* frame size = 0 */
+ 311               	/* stack size = 0 */
+ 312               	.L__stack_usage = 0
+ 313 0000 8330      		cpi r24,lo8(3)
+ 314 0002 00F4      		brsh .L20
+ 315 0004 E82F      		mov r30,r24
+ 316 0006 F0E0      		ldi r31,0
+ 317 0008 E050      		subi r30,lo8(-(CSWTCH.53))
+ 318 000a F040      		sbci r31,hi8(-(CSWTCH.53))
+ 319 000c 2081      		ld r18,Z
+ 320               	.L15:
+ 321               	.LVL10:
+  78:../src/power.c **** 	ACA.AC1MUXCTRL |= muxPinMask;
+ 322               		.loc 1 78 0
+ 323 000e 9091 8203 		lds r25,898
+ 324 0012 922B      		or r25,r18
+ 325 0014 9093 8203 		sts 898,r25
+  79:../src/power.c **** 	busy_delay_ns(150); //In high-power mode, the comparators take up to 110ns to update after changin
+ 326               		.loc 1 79 0
+ 327 0018 8091 8303 		lds r24,899
+ 328               	.LVL11:
+ 329 001c 822B      		or r24,r18
+ 330 001e 8093 8303 		sts 899,r24
+ 331               	.LVL12:
+ 332               	.LBB262:
+ 333               	.LBB263:
+ 334               	.LBB264:
+ 335               	.LBB265:
+ 336               	.LBB266:
+ 337               		.file 3 "../include/delay_x.h"
+   1:../include/delay_x.h **** /*! \file *********************************************************************
+   2:../include/delay_x.h ****   delay_x.h
+   3:../include/delay_x.h **** 
+   4:../include/delay_x.h ****   Accurate delays ranging from a single CPU cycle up to
+   5:../include/delay_x.h ****   more than 500 second (e.g. with 8MHz device):
+   6:../include/delay_x.h **** 
+   7:../include/delay_x.h ****   The idea for the functions below was heavily inspired by the
+   8:../include/delay_x.h ****   file <avr/delay.h> which is part of the excellent WinAVR
+   9:../include/delay_x.h ****   distribution. Therefore, thanks to Marek Michalkiewicz and
+  10:../include/delay_x.h ****   Joerg Wunsch.
+  11:../include/delay_x.h **** 
+  12:../include/delay_x.h ****   The idea is to have the GCC preprocessor handle all calculations
+  13:../include/delay_x.h ****   necessary for determining the exact implementation of a delay
+  14:../include/delay_x.h ****   algorithm. The implementation itself is then inlined into the
+  15:../include/delay_x.h ****   user code.
+  16:../include/delay_x.h ****   In this way it is possible to always get the code size optimized
+  17:../include/delay_x.h ****   delay implementation.
+  18:../include/delay_x.h **** 
+  19:../include/delay_x.h **** \verbatim
+  20:../include/delay_x.h ****   !!======================================================!!
+  21:../include/delay_x.h ****   !! Requires compile time constants for the delay        !!
+  22:../include/delay_x.h ****   !! Requires compiler optimization                       !!
+  23:../include/delay_x.h ****   !!======================================================!!
+  24:../include/delay_x.h **** \endverbatim
+  25:../include/delay_x.h **** 
+  26:../include/delay_x.h ****    Copyright (c) 2005, Hans-Juergen Heinrichs
+  27:../include/delay_x.h ****    All rights reserved.
+  28:../include/delay_x.h **** 
+  29:../include/delay_x.h ****    Redistribution and use in source and binary forms, with or without
+  30:../include/delay_x.h ****    modification, are permitted provided that the following conditions are met:
+  31:../include/delay_x.h **** 
+  32:../include/delay_x.h ****    * Redistributions of source code must retain the above copyright
+  33:../include/delay_x.h ****      notice, this list of conditions and the following disclaimer.
+  34:../include/delay_x.h **** 
+  35:../include/delay_x.h ****    * Redistributions in binary form must reproduce the above copyright
+  36:../include/delay_x.h ****      notice, this list of conditions and the following disclaimer in
+  37:../include/delay_x.h ****      the documentation and/or other materials provided with the
+  38:../include/delay_x.h ****      distribution.
+  39:../include/delay_x.h **** 
+  40:../include/delay_x.h ****    * Neither the name of the copyright holders nor the names of
+  41:../include/delay_x.h ****      contributors may be used to endorse or promote products derived
+  42:../include/delay_x.h ****      from this software without specific prior written permission.
+  43:../include/delay_x.h **** 
+  44:../include/delay_x.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  45:../include/delay_x.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  46:../include/delay_x.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  47:../include/delay_x.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  48:../include/delay_x.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  49:../include/delay_x.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  50:../include/delay_x.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  51:../include/delay_x.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  52:../include/delay_x.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  53:../include/delay_x.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  54:../include/delay_x.h ****   POSSIBILITY OF SUCH DAMAGE.
+  55:../include/delay_x.h ****  *****************************************************************************/
+  56:../include/delay_x.h **** #pragma once
+  57:../include/delay_x.h **** 
+  58:../include/delay_x.h **** #include <inttypes.h>
+  59:../include/delay_x.h **** 
+  60:../include/delay_x.h **** #ifndef F_CPU
+  61:../include/delay_x.h **** # warning "Macro F_CPU must be defined"
+  62:../include/delay_x.h **** #endif
+  63:../include/delay_x.h **** 
+  64:../include/delay_x.h **** 
+  65:../include/delay_x.h **** /*
+  66:../include/delay_x.h ****  *
+  67:../include/delay_x.h ****  *   _ d e l a y _ n s (double __ns)
+  68:../include/delay_x.h ****  *   _ d e l a y _ u s (double __us)
+  69:../include/delay_x.h ****  *   _ d e l a y _ m s (double __ms)
+  70:../include/delay_x.h ****  *   _ d e l a y _ s   (double __s)
+  71:../include/delay_x.h ****  *
+  72:../include/delay_x.h ****  *   Perform a very exact delay with a resolution as accurate as a
+  73:../include/delay_x.h ****  *   single CPU clock (the macro F_CPU is supposed to be defined to a
+  74:../include/delay_x.h ****  *   constant defining the CPU clock frequency in Hertz).
+  75:../include/delay_x.h ****  *
+  76:../include/delay_x.h ****  */
+  77:../include/delay_x.h **** #define busy_delay_ns(__ns)     _delay_cycles( (double)(F_CPU)*((double)__ns)/1.0e9 + 0.99 )
+  78:../include/delay_x.h **** #define busy_delay_us(__us)     _delay_cycles( (double)(F_CPU)*((double)__us)/1.0e6 + 0.99 )
+  79:../include/delay_x.h **** #define busy_delay_ms(__ms)     _delay_cycles( (double)(F_CPU)*((double)__ms)/1.0e3 + 0.99 )
+  80:../include/delay_x.h **** #define busy_delay_s(  __s)     _delay_cycles( (double)(F_CPU)*((double)__s )/1.0e0 + 0.99 )
+  81:../include/delay_x.h **** 
+  82:../include/delay_x.h **** /* ==========================================================================*/
+  83:../include/delay_x.h **** 
+  84:../include/delay_x.h **** /*
+  85:../include/delay_x.h ****  * Forward declaration for all functions with attribute
+  86:../include/delay_x.h ****  * 'always_inline' enforces GCC to inline the code (even
+  87:../include/delay_x.h ****  * if it would be better not to do so from optimization
+  88:../include/delay_x.h ****  * perspective).
+  89:../include/delay_x.h ****  * Without this attribute GCC is free to implement
+  90:../include/delay_x.h ****  * inline code or not (using the keyword 'inline'
+  91:../include/delay_x.h ****  * alone is not sufficient).
+  92:../include/delay_x.h ****  *
+  93:../include/delay_x.h ****  */
+  94:../include/delay_x.h **** static __inline__ void _NOP1( void) __attribute__((always_inline));
+  95:../include/delay_x.h **** static __inline__ void _NOP2( void) __attribute__((always_inline));
+  96:../include/delay_x.h **** static __inline__ void _NOP3( void) __attribute__((always_inline));
+  97:../include/delay_x.h **** static __inline__ void _NOP4( void) __attribute__((always_inline));
+  98:../include/delay_x.h **** static __inline__ void _NOP5( void) __attribute__((always_inline));
+  99:../include/delay_x.h **** static __inline__ void _NOP6( void) __attribute__((always_inline));
+ 100:../include/delay_x.h **** static __inline__ void _NOP7( void) __attribute__((always_inline));
+ 101:../include/delay_x.h **** static __inline__ void _NOP8( void) __attribute__((always_inline));
+ 102:../include/delay_x.h **** static __inline__ void _NOP9( void) __attribute__((always_inline));
+ 103:../include/delay_x.h **** static __inline__ void _NOP10(void) __attribute__((always_inline));
+ 104:../include/delay_x.h **** static __inline__ void _NOP11(void) __attribute__((always_inline));
+ 105:../include/delay_x.h **** static __inline__ void _NOP12(void) __attribute__((always_inline));
+ 106:../include/delay_x.h **** 
+ 107:../include/delay_x.h **** static __inline__ void _delay_loop_3(  uint32_t) __attribute__((always_inline));
+ 108:../include/delay_x.h **** static __inline__ void _delay_loop_1_x( uint8_t) __attribute__((always_inline));
+ 109:../include/delay_x.h **** static __inline__ void _delay_loop_2_x(uint16_t) __attribute__((always_inline));
+ 110:../include/delay_x.h **** static __inline__ void _delay_loop_3_x(uint32_t) __attribute__((always_inline));
+ 111:../include/delay_x.h **** 
+ 112:../include/delay_x.h **** static __inline__ void _delay_cycles(const double) __attribute__((always_inline));
+ 113:../include/delay_x.h **** 
+ 114:../include/delay_x.h **** 
+ 115:../include/delay_x.h **** /*
+ 116:../include/delay_x.h ****  * _ N O P x ( void )
+ 117:../include/delay_x.h ****  *
+ 118:../include/delay_x.h ****  * Code size optimized NOPs - not using any registers
+ 119:../include/delay_x.h ****  *
+ 120:../include/delay_x.h ****  * These NOPs will be used for very short delays where
+ 121:../include/delay_x.h ****  * it is more code efficient than executing loops.
+ 122:../include/delay_x.h ****  *
+ 123:../include/delay_x.h ****  */
+ 124:../include/delay_x.h **** static __inline__ void _NOP1 (void) { __asm__ volatile ( "nop    " "\n\t" ); }
+ 125:../include/delay_x.h **** static __inline__ void _NOP2 (void) { __asm__ volatile ( "rjmp 1f" "\n\t"  "1:" "\n\t" ); }
+ 126:../include/delay_x.h **** static __inline__ void _NOP3 (void) { __asm__ volatile ( "lpm    " "\n\t" ); }
+ 338               		.loc 3 126 0
+ 339               	/* #APP */
+ 340               	 ;  126 "../include/delay_x.h" 1
+ 341 0022 C895      		lpm    
+ 342               		
+ 343               	 ;  0 "" 2
+ 344               	/* #NOAPP */
+ 345               	.LBE266:
+ 346               	.LBE265:
+ 347               	.LBB267:
+ 348               	.LBB268:
+ 125:../include/delay_x.h **** static __inline__ void _NOP3 (void) { __asm__ volatile ( "lpm    " "\n\t" ); }
+ 349               		.loc 3 125 0
+ 350               	/* #APP */
+ 351               	 ;  125 "../include/delay_x.h" 1
+ 352 0024 00C0      		rjmp 1f
+ 353               		1:
+ 354               		
+ 355               	 ;  0 "" 2
+ 356               	.LVL13:
+ 357               	/* #NOAPP */
+ 358               	.LBE268:
+ 359               	.LBE267:
+ 360               	.LBE264:
+ 361               	.LBE263:
+ 362               	.LBE262:
+  82:../src/power.c **** 	ACA.AC0MUXCTRL &= AC_MUXPOS_PIN0_gc;
+ 363               		.loc 1 82 0
+ 364 0026 8091 8703 		lds r24,903
+ 365               	.LVL14:
+  83:../src/power.c **** 	ACA.AC1MUXCTRL &= AC_MUXPOS_PIN0_gc;
+ 366               		.loc 1 83 0
+ 367 002a 9091 8203 		lds r25,898
+ 368 002e 1092 8203 		sts 898,__zero_reg__
+  84:../src/power.c **** 	switch (status & AC_WSTATE_gm){
+ 369               		.loc 1 84 0
+ 370 0032 9091 8303 		lds r25,899
+ 371 0036 1092 8303 		sts 899,__zero_reg__
+  85:../src/power.c **** 		case AC_WSTATE_ABOVE_gc:	return 1;
+ 372               		.loc 1 85 0
+ 373 003a 807C      		andi r24,lo8(-64)
+ 374               	.LVL15:
+ 375 003c 8034      		cpi r24,lo8(64)
+ 376 003e 01F0      		breq .L17
+ 377 0040 8038      		cpi r24,lo8(-128)
+ 378 0042 01F0      		breq .L18
+ 379 0044 8823      		tst r24
+ 380 0046 01F0      		breq .L24
+  89:../src/power.c **** 	}
+ 381               		.loc 1 89 0
+ 382 0048 8FE7      		ldi r24,lo8(127)
+ 383 004a 0895      		ret
+ 384               	.LVL16:
+ 385               	.L20:
+  69:../src/power.c **** 	uint8_t status;
+ 386               		.loc 1 69 0
+ 387 004c 20E0      		ldi r18,0
+ 388 004e 00C0      		rjmp .L15
+ 389               	.LVL17:
+ 390               	.L24:
+  86:../src/power.c **** 		case AC_WSTATE_INSIDE_gc:	return 0;
+ 391               		.loc 1 86 0
+ 392 0050 81E0      		ldi r24,lo8(1)
+  91:../src/power.c **** 
+ 393               		.loc 1 91 0
+ 394 0052 0895      		ret
+ 395               	.L18:
+  88:../src/power.c **** 		default:					return 127;
+ 396               		.loc 1 88 0
+ 397 0054 8FEF      		ldi r24,lo8(-1)
+ 398 0056 0895      		ret
+ 399               	.L17:
+  87:../src/power.c **** 		case AC_WSTATE_BELOW_gc:	return -1;
+ 400               		.loc 1 87 0
+ 401 0058 80E0      		ldi r24,0
+ 402 005a 0895      		ret
+ 403               		.cfi_endproc
+ 404               	.LFE59:
+ 406               		.section	.text.legsPowered,"ax",@progbits
+ 407               	.global	legsPowered
+ 409               	legsPowered:
+ 410               	.LFB60:
+  93:../src/power.c **** 	int8_t leg0status = legStatus(0);
+ 411               		.loc 1 93 0
+ 412               		.cfi_startproc
+ 413 0000 CF93      		push r28
+ 414               	.LCFI0:
+ 415               		.cfi_def_cfa_offset 4
+ 416               		.cfi_offset 28, -3
+ 417 0002 DF93      		push r29
+ 418               	.LCFI1:
+ 419               		.cfi_def_cfa_offset 5
+ 420               		.cfi_offset 29, -4
+ 421               	/* prologue: function */
+ 422               	/* frame size = 0 */
+ 423               	/* stack size = 2 */
+ 424               	.L__stack_usage = 2
+  94:../src/power.c **** 	int8_t leg1status = legStatus(1);
+ 425               		.loc 1 94 0
+ 426 0004 80E0      		ldi r24,0
+ 427 0006 0E94 0000 		call legStatus
+ 428               	.LVL18:
+ 429 000a C82F      		mov r28,r24
+ 430               	.LVL19:
+  95:../src/power.c **** 	int8_t leg2status = legStatus(2);
+ 431               		.loc 1 95 0
+ 432 000c 81E0      		ldi r24,lo8(1)
+ 433               	.LVL20:
+ 434 000e 0E94 0000 		call legStatus
+ 435               	.LVL21:
+ 436 0012 D82F      		mov r29,r24
+ 437               	.LVL22:
+  96:../src/power.c **** 	uint8_t someLegsHigh = (leg0status==1) || (leg1status==1) || (leg2status==1);
+ 438               		.loc 1 96 0
+ 439 0014 82E0      		ldi r24,lo8(2)
+ 440               	.LVL23:
+ 441 0016 0E94 0000 		call legStatus
+ 442               	.LVL24:
+  97:../src/power.c **** 	uint8_t someLegsLow = (leg0status==-1) || (leg1status==-1) || (leg2status==-1);
+ 443               		.loc 1 97 0
+ 444 001a C130      		cpi r28,lo8(1)
+ 445 001c 01F0      		breq .L26
+  97:../src/power.c **** 	uint8_t someLegsLow = (leg0status==-1) || (leg1status==-1) || (leg2status==-1);
+ 446               		.loc 1 97 0 is_stmt 0 discriminator 2
+ 447 001e D130      		cpi r29,lo8(1)
+ 448 0020 01F0      		breq .L27
+  97:../src/power.c **** 	uint8_t someLegsLow = (leg0status==-1) || (leg1status==-1) || (leg2status==-1);
+ 449               		.loc 1 97 0 discriminator 4
+ 450 0022 91E0      		ldi r25,lo8(1)
+ 451 0024 8130      		cpi r24,lo8(1)
+ 452 0026 01F0      		breq .L28
+ 453 0028 90E0      		ldi r25,0
+ 454               	.L28:
+ 455               	.LVL25:
+  98:../src/power.c **** 	return (someLegsHigh && someLegsLow);
+ 456               		.loc 1 98 0 is_stmt 1 discriminator 4
+ 457 002a CF3F      		cpi r28,lo8(-1)
+ 458 002c 01F0      		breq .L29
+  98:../src/power.c **** 	return (someLegsHigh && someLegsLow);
+ 459               		.loc 1 98 0 is_stmt 0 discriminator 2
+ 460 002e DF3F      		cpi r29,lo8(-1)
+ 461 0030 01F0      		breq .L29
+  98:../src/power.c **** 	return (someLegsHigh && someLegsLow);
+ 462               		.loc 1 98 0 discriminator 4
+ 463 0032 8F3F      		cpi r24,lo8(-1)
+ 464 0034 01F0      		breq .L29
+ 465               	.LVL26:
+ 466               	.L49:
+ 467 0036 80E0      		ldi r24,0
+ 468               	/* epilogue start */
+ 100:../src/power.c **** 
+ 469               		.loc 1 100 0 is_stmt 1
+ 470 0038 DF91      		pop r29
+ 471               	.LVL27:
+ 472 003a CF91      		pop r28
+ 473               	.LVL28:
+ 474 003c 0895      		ret
+ 475               	.LVL29:
+ 476               	.L29:
+ 477 003e 81E0      		ldi r24,lo8(1)
+ 478               	.LVL30:
+ 479 0040 9923      		tst r25
+ 480 0042 01F0      		breq .L49
+ 481               	/* epilogue start */
+ 482 0044 DF91      		pop r29
+ 483               	.LVL31:
+ 484 0046 CF91      		pop r28
+ 485               	.LVL32:
+ 486 0048 0895      		ret
+ 487               	.LVL33:
+ 488               	.L26:
+  98:../src/power.c **** 	return (someLegsHigh && someLegsLow);
+ 489               		.loc 1 98 0
+ 490 004a DF3F      		cpi r29,lo8(-1)
+ 491 004c 01F0      		breq .L34
+ 492               	.L48:
+  97:../src/power.c **** 	uint8_t someLegsLow = (leg0status==-1) || (leg1status==-1) || (leg2status==-1);
+ 493               		.loc 1 97 0
+ 494 004e 91E0      		ldi r25,lo8(1)
+ 495               	.LVL34:
+  98:../src/power.c **** 	return (someLegsHigh && someLegsLow);
+ 496               		.loc 1 98 0
+ 497 0050 8F3F      		cpi r24,lo8(-1)
+ 498 0052 01F4      		brne .L49
+ 499 0054 00C0      		rjmp .L29
+ 500               	.LVL35:
+ 501               	.L27:
+ 502 0056 CF3F      		cpi r28,lo8(-1)
+ 503 0058 01F4      		brne .L48
+ 504               	.L34:
+ 505 005a 81E0      		ldi r24,lo8(1)
+ 506               	.LVL36:
+ 507               	/* epilogue start */
+ 100:../src/power.c **** 
+ 508               		.loc 1 100 0
+ 509 005c DF91      		pop r29
+ 510               	.LVL37:
+ 511 005e CF91      		pop r28
+ 512               	.LVL38:
+ 513 0060 0895      		ret
+ 514               		.cfi_endproc
+ 515               	.LFE60:
+ 517               		.section	.text.legsFloating,"ax",@progbits
+ 518               	.global	legsFloating
+ 520               	legsFloating:
+ 521               	.LFB61:
+ 102:../src/power.c **** 	int8_t leg0status = legStatus(0);
+ 522               		.loc 1 102 0
+ 523               		.cfi_startproc
+ 524 0000 CF93      		push r28
+ 525               	.LCFI2:
+ 526               		.cfi_def_cfa_offset 4
+ 527               		.cfi_offset 28, -3
+ 528 0002 DF93      		push r29
+ 529               	.LCFI3:
+ 530               		.cfi_def_cfa_offset 5
+ 531               		.cfi_offset 29, -4
+ 532               	/* prologue: function */
+ 533               	/* frame size = 0 */
+ 534               	/* stack size = 2 */
+ 535               	.L__stack_usage = 2
+ 103:../src/power.c **** 	int8_t leg1status = legStatus(1);
+ 536               		.loc 1 103 0
+ 537 0004 80E0      		ldi r24,0
+ 538 0006 0E94 0000 		call legStatus
+ 539               	.LVL39:
+ 540 000a C82F      		mov r28,r24
+ 541               	.LVL40:
+ 104:../src/power.c **** 	int8_t leg2status = legStatus(2);
+ 542               		.loc 1 104 0
+ 543 000c 81E0      		ldi r24,lo8(1)
+ 544               	.LVL41:
+ 545 000e 0E94 0000 		call legStatus
+ 546               	.LVL42:
+ 547 0012 D82F      		mov r29,r24
+ 548               	.LVL43:
+ 105:../src/power.c **** 	return !(leg0status || leg1status || leg2status);
+ 549               		.loc 1 105 0
+ 550 0014 82E0      		ldi r24,lo8(2)
+ 551               	.LVL44:
+ 552 0016 0E94 0000 		call legStatus
+ 553               	.LVL45:
+ 554 001a 982F      		mov r25,r24
+ 555               	.LVL46:
+ 106:../src/power.c **** }
+ 556               		.loc 1 106 0
+ 557 001c C111      		cpse r28,__zero_reg__
+ 558 001e 00C0      		rjmp .L55
+ 106:../src/power.c **** }
+ 559               		.loc 1 106 0 is_stmt 0 discriminator 1
+ 560 0020 DD23      		tst r29
+ 561 0022 01F0      		breq .L60
+ 562               	.LVL47:
+ 563               	.L55:
+ 564 0024 80E0      		ldi r24,0
+ 565               	/* epilogue start */
+ 107:../src/power.c **** 
+ 566               		.loc 1 107 0 is_stmt 1
+ 567 0026 DF91      		pop r29
+ 568               	.LVL48:
+ 569 0028 CF91      		pop r28
+ 570               	.LVL49:
+ 571 002a 0895      		ret
+ 572               	.LVL50:
+ 573               	.L60:
+ 574 002c 81E0      		ldi r24,lo8(1)
+ 575               	.LVL51:
+ 576 002e 9111      		cpse r25,__zero_reg__
+ 577 0030 00C0      		rjmp .L55
+ 578               	/* epilogue start */
+ 579 0032 DF91      		pop r29
+ 580               	.LVL52:
+ 581 0034 CF91      		pop r28
+ 582               	.LVL53:
+ 583 0036 0895      		ret
+ 584               		.cfi_endproc
+ 585               	.LFE61:
+ 587               	.global	__floatsisf
+ 588               	.global	__fixsfsi
+ 589               		.section	.text.checkLegsTask,"ax",@progbits
+ 590               	.global	checkLegsTask
+ 592               	checkLegsTask:
+ 593               	.LFB62:
+ 111:../src/power.c **** 	if(!unpoweredFixActive){
+ 594               		.loc 1 111 0
+ 595               		.cfi_startproc
+ 596 0000 AF92      		push r10
+ 597               	.LCFI4:
+ 598               		.cfi_def_cfa_offset 4
+ 599               		.cfi_offset 10, -3
+ 600 0002 BF92      		push r11
+ 601               	.LCFI5:
+ 602               		.cfi_def_cfa_offset 5
+ 603               		.cfi_offset 11, -4
+ 604 0004 DF92      		push r13
+ 605               	.LCFI6:
+ 606               		.cfi_def_cfa_offset 6
+ 607               		.cfi_offset 13, -5
+ 608 0006 EF92      		push r14
+ 609               	.LCFI7:
+ 610               		.cfi_def_cfa_offset 7
+ 611               		.cfi_offset 14, -6
+ 612 0008 FF92      		push r15
+ 613               	.LCFI8:
+ 614               		.cfi_def_cfa_offset 8
+ 615               		.cfi_offset 15, -7
+ 616 000a 0F93      		push r16
+ 617               	.LCFI9:
+ 618               		.cfi_def_cfa_offset 9
+ 619               		.cfi_offset 16, -8
+ 620 000c 1F93      		push r17
+ 621               	.LCFI10:
+ 622               		.cfi_def_cfa_offset 10
+ 623               		.cfi_offset 17, -9
+ 624 000e CF93      		push r28
+ 625               	.LCFI11:
+ 626               		.cfi_def_cfa_offset 11
+ 627               		.cfi_offset 28, -10
+ 628 0010 DF93      		push r29
+ 629               	.LCFI12:
+ 630               		.cfi_def_cfa_offset 12
+ 631               		.cfi_offset 29, -11
+ 632               	/* prologue: function */
+ 633               	/* frame size = 0 */
+ 634               	/* stack size = 9 */
+ 635               	.L__stack_usage = 9
+ 112:../src/power.c **** 		return;
+ 636               		.loc 1 112 0
+ 637 0012 8091 0000 		lds r24,unpoweredFixActive
+ 638 0016 8111      		cpse r24,__zero_reg__
+ 639 0018 00C0      		rjmp .L75
+ 640               	.L61:
+ 641               	/* epilogue start */
+ 149:../src/power.c **** 
+ 642               		.loc 1 149 0
+ 643 001a DF91      		pop r29
+ 644 001c CF91      		pop r28
+ 645 001e 1F91      		pop r17
+ 646 0020 0F91      		pop r16
+ 647 0022 FF90      		pop r15
+ 648 0024 EF90      		pop r14
+ 649 0026 DF90      		pop r13
+ 650 0028 BF90      		pop r11
+ 651 002a AF90      		pop r10
+ 652 002c 0895      		ret
+ 653               	.L75:
+ 115:../src/power.c **** 		unpoweredFixActive = 0; //Nothing left to do.
+ 654               		.loc 1 115 0
+ 655 002e 0E94 0000 		call legsPowered
+ 656               	.LVL54:
+ 657 0032 8823      		tst r24
+ 658 0034 01F0      		breq .L76
+ 659               	.L74:
+ 118:../src/power.c **** 	}else{
+ 660               		.loc 1 118 0
+ 661 0036 1092 0000 		sts unpoweredFixActive,__zero_reg__
+ 662 003a 00C0      		rjmp .L61
+ 663               	.L76:
+ 117:../src/power.c **** 		unpoweredFixActive = 0; //Problem isn't resolved, but it seems like we simply aren't on the floor
+ 664               		.loc 1 117 0
+ 665 003c 0E94 0000 		call legsFloating
+ 666               	.LVL55:
+ 667 0040 8111      		cpse r24,__zero_reg__
+ 668 0042 00C0      		rjmp .L74
+ 121:../src/power.c **** 			//At first, we're going to use the calibrated motor values:
+ 669               		.loc 1 121 0
+ 670 0044 8091 0000 		lds r24,failedLegChecks
+ 671 0048 8430      		cpi r24,lo8(4)
+ 672 004a 00F4      		brsh .+2
+ 673 004c 00C0      		rjmp .L77
+ 124:../src/power.c **** 			//Assuming at this point that this Droplet hasn't been calibrated, so we're using progressively 
+ 674               		.loc 1 124 0
+ 675 004e 8091 0000 		lds r24,failedLegChecks
+ 676 0052 8830      		cpi r24,lo8(8)
+ 677 0054 00F0      		brlo .L78
+ 144:../src/power.c **** 		}
+ 678               		.loc 1 144 0
+ 679 0056 1092 0000 		sts unpoweredFixActive,__zero_reg__
+ 680               	.L66:
+ 146:../src/power.c **** 		failedLegChecks++;
+ 681               		.loc 1 146 0
+ 682 005a 20E0      		ldi r18,0
+ 683 005c 30E0      		ldi r19,0
+ 684 005e 40E0      		ldi r20,lo8(gs(stopLowPowerMoveTask))
+ 685 0060 50E0      		ldi r21,hi8(gs(stopLowPowerMoveTask))
+ 686 0062 66E9      		ldi r22,lo8(-106)
+ 687 0064 70E0      		ldi r23,0
+ 688 0066 80E0      		ldi r24,0
+ 689 0068 90E0      		ldi r25,0
+ 690 006a 0E94 0000 		call scheduleTask
+ 691               	.LVL56:
+ 147:../src/power.c **** 	}
+ 692               		.loc 1 147 0
+ 693 006e 8091 0000 		lds r24,failedLegChecks
+ 694 0072 8F5F      		subi r24,lo8(-(1))
+ 695 0074 8093 0000 		sts failedLegChecks,r24
+ 696 0078 00C0      		rjmp .L61
+ 697               	.L78:
+ 698               	.LBB269:
+ 699               	.LBB270:
+ 128:../src/power.c **** 				adj[0] = motorAdjusts[6][0];
+ 700               		.loc 1 128 0
+ 701 007a DFB6      		in r13,__SREG__
+ 702               	.LVL57:
+ 703               	.LBB271:
+ 704               	.LBB272:
+ 705               		.file 4 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+   1:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** /* Copyright (c) 2007 Dean Camera
+   2:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    All rights reserved.
+   3:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+   4:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    Redistribution and use in source and binary forms, with or without
+   5:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    modification, are permitted provided that the following conditions are met:
+   6:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+   7:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    * Redistributions of source code must retain the above copyright
+   8:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      notice, this list of conditions and the following disclaimer.
+   9:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  10:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    * Redistributions in binary form must reproduce the above copyright
+  11:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      notice, this list of conditions and the following disclaimer in
+  12:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      the documentation and/or other materials provided with the
+  13:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      distribution.
+  14:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  15:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****    * Neither the name of the copyright holders nor the names of
+  16:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      contributors may be used to endorse or promote products derived
+  17:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****      from this software without specific prior written permission.
+  18:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  19:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  20:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  21:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  22:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  23:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  24:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  25:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  26:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  27:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  28:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  29:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****   POSSIBILITY OF SUCH DAMAGE.
+  30:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** */
+  31:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  32:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** /* $Id$ */
+  33:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  34:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #ifndef _UTIL_ATOMIC_H_
+  35:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #define _UTIL_ATOMIC_H_ 1
+  36:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  37:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #include <avr/io.h>
+  38:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #include <avr/interrupt.h>
+  39:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  40:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** #if !defined(__DOXYGEN__)
+  41:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** /* Internal helper functions. */
+  42:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ uint8_t __iSeiRetVal(void)
+  43:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  44:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     sei();
+  45:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     return 1;
+  46:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  47:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  48:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ uint8_t __iCliRetVal(void)
+  49:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  50:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     cli();
+ 706               		.loc 4 50 0
+ 707               	/* #APP */
+ 708               	 ;  50 "c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\
+ 709 007c F894      		cli
+ 710               	 ;  0 "" 2
+ 711               	.LVL58:
+ 712               	/* #NOAPP */
+ 713               	.LBE272:
+ 714               	.LBE271:
+ 129:../src/power.c **** 				adj[1] = motorAdjusts[6][1];
+ 715               		.loc 1 129 0
+ 716 007e E090 0000 		lds r14,motorAdjusts+36
+ 717 0082 F090 0000 		lds r15,motorAdjusts+36+1
+ 718               	.LVL59:
+ 130:../src/power.c **** 				adj[2] = motorAdjusts[6][2];
+ 719               		.loc 1 130 0
+ 720 0086 0091 0000 		lds r16,motorAdjusts+38
+ 721 008a 1091 0000 		lds r17,motorAdjusts+38+1
+ 722               	.LVL60:
+ 131:../src/power.c **** 				//The equation below should cause the temporary motor adjustment values to alternate between po
+ 723               		.loc 1 131 0
+ 724 008e C091 0000 		lds r28,motorAdjusts+40
+ 725 0092 D091 0000 		lds r29,motorAdjusts+40+1
+ 726               	.LVL61:
+ 133:../src/power.c **** 				motorAdjusts[6][1] = ((int16_t)pow(-1, failedLegChecks-5))*(1000 + (((failedLegChecks - 5)/2)*5
+ 727               		.loc 1 133 0
+ 728 0096 6091 0000 		lds r22,failedLegChecks
+ 729 009a 70E0      		ldi r23,0
+ 730 009c 6550      		subi r22,5
+ 731 009e 7109      		sbc r23,__zero_reg__
+ 732 00a0 072E      		mov __tmp_reg__,r23
+ 733 00a2 000C      		lsl r0
+ 734 00a4 880B      		sbc r24,r24
+ 735 00a6 990B      		sbc r25,r25
+ 736 00a8 0E94 0000 		call __floatsisf
+ 737               	.LVL62:
+ 738 00ac 9B01      		movw r18,r22
+ 739 00ae AC01      		movw r20,r24
+ 740 00b0 60E0      		ldi r22,0
+ 741 00b2 70E0      		ldi r23,0
+ 742 00b4 80E8      		ldi r24,lo8(-128)
+ 743 00b6 9FEB      		ldi r25,lo8(-65)
+ 744 00b8 0E94 0000 		call pow
+ 745               	.LVL63:
+ 746 00bc 2091 0000 		lds r18,failedLegChecks
+ 747 00c0 30E0      		ldi r19,0
+ 748 00c2 A901      		movw r20,r18
+ 749 00c4 4550      		subi r20,5
+ 750 00c6 5109      		sbc r21,__zero_reg__
+ 751 00c8 57FD      		sbrc r21,7
+ 752 00ca 00C0      		rjmp .L79
+ 753               	.L68:
+ 754 00cc 5595      		asr r21
+ 755 00ce 4795      		ror r20
+ 756 00d0 24EF      		ldi r18,lo8(-12)
+ 757 00d2 31E0      		ldi r19,lo8(1)
+ 758 00d4 429F      		mul r20,r18
+ 759 00d6 5001      		movw r10,r0
+ 760 00d8 439F      		mul r20,r19
+ 761 00da B00C      		add r11,r0
+ 762 00dc 529F      		mul r21,r18
+ 763 00de B00C      		add r11,r0
+ 764 00e0 1124      		clr r1
+ 765 00e2 28E1      		ldi r18,24
+ 766 00e4 A21A      		sub r10,r18
+ 767 00e6 2CEF      		ldi r18,-4
+ 768 00e8 B20A      		sbc r11,r18
+ 769 00ea 0E94 0000 		call __fixsfsi
+ 770               	.LVL64:
+ 771 00ee A69E      		mul r10,r22
+ 772 00f0 9001      		movw r18,r0
+ 773 00f2 A79E      		mul r10,r23
+ 774 00f4 300D      		add r19,r0
+ 775 00f6 B69E      		mul r11,r22
+ 776 00f8 300D      		add r19,r0
+ 777 00fa 1124      		clr r1
+ 778 00fc 2093 0000 		sts motorAdjusts+36,r18
+ 779 0100 3093 0000 		sts motorAdjusts+36+1,r19
+ 134:../src/power.c **** 				motorAdjusts[6][2] = ((int16_t)pow(-1, failedLegChecks-5))*(1000 + (((failedLegChecks - 5)/2)*5
+ 780               		.loc 1 134 0
+ 781 0104 6091 0000 		lds r22,failedLegChecks
+ 782 0108 70E0      		ldi r23,0
+ 783 010a 6550      		subi r22,5
+ 784 010c 7109      		sbc r23,__zero_reg__
+ 785 010e 072E      		mov __tmp_reg__,r23
+ 786 0110 000C      		lsl r0
+ 787 0112 880B      		sbc r24,r24
+ 788 0114 990B      		sbc r25,r25
+ 789 0116 0E94 0000 		call __floatsisf
+ 790               	.LVL65:
+ 791 011a 9B01      		movw r18,r22
+ 792 011c AC01      		movw r20,r24
+ 793 011e 60E0      		ldi r22,0
+ 794 0120 70E0      		ldi r23,0
+ 795 0122 80E8      		ldi r24,lo8(-128)
+ 796 0124 9FEB      		ldi r25,lo8(-65)
+ 797 0126 0E94 0000 		call pow
+ 798               	.LVL66:
+ 799 012a 2091 0000 		lds r18,failedLegChecks
+ 800 012e 30E0      		ldi r19,0
+ 801 0130 A901      		movw r20,r18
+ 802 0132 4550      		subi r20,5
+ 803 0134 5109      		sbc r21,__zero_reg__
+ 804 0136 57FD      		sbrc r21,7
+ 805 0138 00C0      		rjmp .L80
+ 806               	.L69:
+ 807 013a 5595      		asr r21
+ 808 013c 4795      		ror r20
+ 809 013e 24EF      		ldi r18,lo8(-12)
+ 810 0140 31E0      		ldi r19,lo8(1)
+ 811 0142 429F      		mul r20,r18
+ 812 0144 5001      		movw r10,r0
+ 813 0146 439F      		mul r20,r19
+ 814 0148 B00C      		add r11,r0
+ 815 014a 529F      		mul r21,r18
+ 816 014c B00C      		add r11,r0
+ 817 014e 1124      		clr r1
+ 818 0150 28E1      		ldi r18,24
+ 819 0152 A21A      		sub r10,r18
+ 820 0154 2CEF      		ldi r18,-4
+ 821 0156 B20A      		sbc r11,r18
+ 822 0158 0E94 0000 		call __fixsfsi
+ 823               	.LVL67:
+ 824 015c A69E      		mul r10,r22
+ 825 015e 9001      		movw r18,r0
+ 826 0160 A79E      		mul r10,r23
+ 827 0162 300D      		add r19,r0
+ 828 0164 B69E      		mul r11,r22
+ 829 0166 300D      		add r19,r0
+ 830 0168 1124      		clr r1
+ 831 016a 2093 0000 		sts motorAdjusts+38,r18
+ 832 016e 3093 0000 		sts motorAdjusts+38+1,r19
+ 135:../src/power.c **** 			}
+ 833               		.loc 1 135 0
+ 834 0172 6091 0000 		lds r22,failedLegChecks
+ 835 0176 70E0      		ldi r23,0
+ 836 0178 6550      		subi r22,5
+ 837 017a 7109      		sbc r23,__zero_reg__
+ 838 017c 072E      		mov __tmp_reg__,r23
+ 839 017e 000C      		lsl r0
+ 840 0180 880B      		sbc r24,r24
+ 841 0182 990B      		sbc r25,r25
+ 842 0184 0E94 0000 		call __floatsisf
+ 843               	.LVL68:
+ 844 0188 9B01      		movw r18,r22
+ 845 018a AC01      		movw r20,r24
+ 846 018c 60E0      		ldi r22,0
+ 847 018e 70E0      		ldi r23,0
+ 848 0190 80E8      		ldi r24,lo8(-128)
+ 849 0192 9FEB      		ldi r25,lo8(-65)
+ 850 0194 0E94 0000 		call pow
+ 851               	.LVL69:
+ 852 0198 2091 0000 		lds r18,failedLegChecks
+ 853 019c 30E0      		ldi r19,0
+ 854 019e A901      		movw r20,r18
+ 855 01a0 4550      		subi r20,5
+ 856 01a2 5109      		sbc r21,__zero_reg__
+ 857 01a4 57FD      		sbrc r21,7
+ 858 01a6 00C0      		rjmp .L81
+ 859               	.L70:
+ 860 01a8 5595      		asr r21
+ 861 01aa 4795      		ror r20
+ 862 01ac 24EF      		ldi r18,lo8(-12)
+ 863 01ae 31E0      		ldi r19,lo8(1)
+ 864 01b0 429F      		mul r20,r18
+ 865 01b2 5001      		movw r10,r0
+ 866 01b4 439F      		mul r20,r19
+ 867 01b6 B00C      		add r11,r0
+ 868 01b8 529F      		mul r21,r18
+ 869 01ba B00C      		add r11,r0
+ 870 01bc 1124      		clr r1
+ 871 01be 28E1      		ldi r18,24
+ 872 01c0 A21A      		sub r10,r18
+ 873 01c2 2CEF      		ldi r18,-4
+ 874 01c4 B20A      		sbc r11,r18
+ 875 01c6 0E94 0000 		call __fixsfsi
+ 876               	.LVL70:
+ 877 01ca A69E      		mul r10,r22
+ 878 01cc 9001      		movw r18,r0
+ 879 01ce A79E      		mul r10,r23
+ 880 01d0 300D      		add r19,r0
+ 881 01d2 B69E      		mul r11,r22
+ 882 01d4 300D      		add r19,r0
+ 883 01d6 1124      		clr r1
+ 884 01d8 2093 0000 		sts motorAdjusts+40,r18
+ 885 01dc 3093 0000 		sts motorAdjusts+40+1,r19
+ 886               	.LVL71:
+ 887               	.LBB273:
+ 888               	.LBB274:
+  51:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     return 1;
+  52:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  53:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  54:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ void __iSeiParam(const uint8_t *__s)
+  55:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  56:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     sei();
+  57:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+  58:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     (void)__s;
+  59:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  60:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  61:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ void __iCliParam(const uint8_t *__s)
+  62:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  63:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     cli();
+  64:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+  65:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     (void)__s;
+  66:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** }
+  67:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** 
+  68:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** static __inline__ void __iRestore(const  uint8_t *__s)
+  69:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h **** {
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     SREG = *__s;
+ 889               		.loc 4 70 0
+ 890 01e0 DFBE      		out __SREG__,r13
+  71:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+ 891               		.loc 4 71 0
+ 892               	.LVL72:
+ 893               	.LBE274:
+ 894               	.LBE273:
+ 895               	.LBE270:
+ 137:../src/power.c **** 			ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+ 896               		.loc 1 137 0
+ 897 01e2 62E3      		ldi r22,lo8(50)
+ 898 01e4 70E0      		ldi r23,0
+ 899 01e6 86E0      		ldi r24,lo8(6)
+ 900 01e8 0E94 0000 		call moveSteps
+ 901               	.LVL73:
+ 902               	.LBB275:
+ 138:../src/power.c **** 				motorAdjusts[6][0] = adj[0];
+ 903               		.loc 1 138 0
+ 904 01ec 8FB7      		in r24,__SREG__
+ 905               	.LVL74:
+ 906               	.LBB276:
+ 907               	.LBB277:
+  50:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     return 1;
+ 908               		.loc 4 50 0
+ 909               	/* #APP */
+ 910               	 ;  50 "c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\
+ 911 01ee F894      		cli
+ 912               	 ;  0 "" 2
+ 913               	.LVL75:
+ 914               	/* #NOAPP */
+ 915               	.LBE277:
+ 916               	.LBE276:
+ 139:../src/power.c **** 				motorAdjusts[6][1] = adj[1];
+ 917               		.loc 1 139 0
+ 918 01f0 E092 0000 		sts motorAdjusts+36,r14
+ 919 01f4 F092 0000 		sts motorAdjusts+36+1,r15
+ 140:../src/power.c **** 				motorAdjusts[6][2] = adj[2];
+ 920               		.loc 1 140 0
+ 921 01f8 0093 0000 		sts motorAdjusts+38,r16
+ 922 01fc 1093 0000 		sts motorAdjusts+38+1,r17
+ 141:../src/power.c **** 			}
+ 923               		.loc 1 141 0
+ 924 0200 C093 0000 		sts motorAdjusts+40,r28
+ 925 0204 D093 0000 		sts motorAdjusts+40+1,r29
+ 926               	.LVL76:
+ 927               	.LBB278:
+ 928               	.LBB279:
+  70:c:\program files (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\atomic.h ****     __asm__ volatile ("" ::: "memory");
+ 929               		.loc 4 70 0
+ 930 0208 8FBF      		out __SREG__,r24
+ 931               		.loc 4 71 0
+ 932               	.LVL77:
+ 933               	.LBE279:
+ 934               	.LBE278:
+ 935               	.LBE275:
+ 936               	.LBE269:
+ 937 020a 00C0      		rjmp .L66
+ 938               	.LVL78:
+ 939               	.L81:
+ 940               	.LBB281:
+ 941               	.LBB280:
+ 135:../src/power.c **** 			}
+ 942               		.loc 1 135 0
+ 943 020c 4F5F      		subi r20,-1
+ 944 020e 5F4F      		sbci r21,-1
+ 945 0210 00C0      		rjmp .L70
+ 946               	.L80:
+ 134:../src/power.c **** 				motorAdjusts[6][2] = ((int16_t)pow(-1, failedLegChecks-5))*(1000 + (((failedLegChecks - 5)/2)*5
+ 947               		.loc 1 134 0
+ 948 0212 4F5F      		subi r20,-1
+ 949 0214 5F4F      		sbci r21,-1
+ 950 0216 00C0      		rjmp .L69
+ 951               	.L79:
+ 133:../src/power.c **** 				motorAdjusts[6][1] = ((int16_t)pow(-1, failedLegChecks-5))*(1000 + (((failedLegChecks - 5)/2)*5
+ 952               		.loc 1 133 0
+ 953 0218 4F5F      		subi r20,-1
+ 954 021a 5F4F      		sbci r21,-1
+ 955 021c 00C0      		rjmp .L68
+ 956               	.LVL79:
+ 957               	.L77:
+ 958               	.LBE280:
+ 959               	.LBE281:
+ 123:../src/power.c **** 		}else if(failedLegChecks < 8){ 
+ 960               		.loc 1 123 0
+ 961 021e 62E3      		ldi r22,lo8(50)
+ 962 0220 70E0      		ldi r23,0
+ 963 0222 86E0      		ldi r24,lo8(6)
+ 964 0224 0E94 0000 		call moveSteps
+ 965               	.LVL80:
+ 966 0228 00C0      		rjmp .L66
+ 967               		.cfi_endproc
+ 968               	.LFE62:
+ 970               		.section	.text.__vector_36,"ax",@progbits
+ 971               	.global	__vector_36
+ 973               	__vector_36:
+ 974               	.LFB66:
+ 157:../src/power.c **** }
+ 158:../src/power.c **** 
+ 159:../src/power.c **** inline static void capFallingEdgeISR(void){
+ 160:../src/power.c **** 	if(!unpoweredFixActive){
+ 161:../src/power.c **** 		if(!(legsPowered() || legsFloating())){
+ 162:../src/power.c **** 			unpoweredFixActive = 1;
+ 163:../src/power.c **** 			moveSteps(6,50);
+ 164:../src/power.c **** 			failedLegChecks = 0;
+ 165:../src/power.c **** 			scheduleTask(150, stopLowPowerMoveTask, NULL);
+ 166:../src/power.c **** 		}
+ 167:../src/power.c **** 	}
+ 168:../src/power.c **** }
+ 169:../src/power.c **** 
+ 170:../src/power.c **** inline static void capRisingEdgeISR(void){
+ 171:../src/power.c **** 	if(unpoweredFixActive){
+ 172:../src/power.c **** 		stopMove();
+ 173:../src/power.c **** 		failedLegChecks = 0;
+ 174:../src/power.c **** 		unpoweredFixActive = 0;
+ 175:../src/power.c **** 	}
+ 176:../src/power.c **** }
+ 177:../src/power.c **** 
+ 178:../src/power.c **** ISR( ACB_AC0_vect ){
+ 975               		.loc 1 178 0
+ 976               		.cfi_startproc
+ 977 0000 1F92      		push r1
+ 978               	.LCFI13:
+ 979               		.cfi_def_cfa_offset 4
+ 980               		.cfi_offset 1, -3
+ 981 0002 0F92      		push r0
+ 982               	.LCFI14:
+ 983               		.cfi_def_cfa_offset 5
+ 984               		.cfi_offset 0, -4
+ 985 0004 0FB6      		in r0,__SREG__
+ 986 0006 0F92      		push r0
+ 987 0008 1124      		clr __zero_reg__
+ 988 000a 0BB6      		in r0,__RAMPZ__
+ 989 000c 0F92      		push r0
+ 990 000e 2F93      		push r18
+ 991               	.LCFI15:
+ 992               		.cfi_def_cfa_offset 6
+ 993               		.cfi_offset 18, -5
+ 994 0010 3F93      		push r19
+ 995               	.LCFI16:
+ 996               		.cfi_def_cfa_offset 7
+ 997               		.cfi_offset 19, -6
+ 998 0012 4F93      		push r20
+ 999               	.LCFI17:
+ 1000               		.cfi_def_cfa_offset 8
+ 1001               		.cfi_offset 20, -7
+ 1002 0014 5F93      		push r21
+ 1003               	.LCFI18:
+ 1004               		.cfi_def_cfa_offset 9
+ 1005               		.cfi_offset 21, -8
+ 1006 0016 6F93      		push r22
+ 1007               	.LCFI19:
+ 1008               		.cfi_def_cfa_offset 10
+ 1009               		.cfi_offset 22, -9
+ 1010 0018 7F93      		push r23
+ 1011               	.LCFI20:
+ 1012               		.cfi_def_cfa_offset 11
+ 1013               		.cfi_offset 23, -10
+ 1014 001a 8F93      		push r24
+ 1015               	.LCFI21:
+ 1016               		.cfi_def_cfa_offset 12
+ 1017               		.cfi_offset 24, -11
+ 1018 001c 9F93      		push r25
+ 1019               	.LCFI22:
+ 1020               		.cfi_def_cfa_offset 13
+ 1021               		.cfi_offset 25, -12
+ 1022 001e AF93      		push r26
+ 1023               	.LCFI23:
+ 1024               		.cfi_def_cfa_offset 14
+ 1025               		.cfi_offset 26, -13
+ 1026 0020 BF93      		push r27
+ 1027               	.LCFI24:
+ 1028               		.cfi_def_cfa_offset 15
+ 1029               		.cfi_offset 27, -14
+ 1030 0022 EF93      		push r30
+ 1031               	.LCFI25:
+ 1032               		.cfi_def_cfa_offset 16
+ 1033               		.cfi_offset 30, -15
+ 1034 0024 FF93      		push r31
+ 1035               	.LCFI26:
+ 1036               		.cfi_def_cfa_offset 17
+ 1037               		.cfi_offset 31, -16
+ 1038               	/* prologue: Signal */
+ 1039               	/* frame size = 0 */
+ 1040               	/* stack size = 16 */
+ 1041               	.L__stack_usage = 16
+ 1042               	.LBB288:
+ 1043               	.LBB289:
+  57:../src/power.c **** /*
+ 1044               		.loc 1 57 0
+ 1045 0026 8091 9703 		lds r24,919
+ 1046               	.LBE289:
+ 1047               	.LBE288:
+ 179:../src/power.c **** 	//Triggers on both rising and falling edge, so check the current status to know what we have
+ 180:../src/power.c **** 	if(capStatus()){
+ 1048               		.loc 1 180 0
+ 1049 002a 84FF      		sbrs r24,4
+ 1050 002c 00C0      		rjmp .L83
+ 1051               	.LBB290:
+ 1052               	.LBB291:
+ 171:../src/power.c **** 		stopMove();
+ 1053               		.loc 1 171 0
+ 1054 002e 8091 0000 		lds r24,unpoweredFixActive
+ 1055 0032 8111      		cpse r24,__zero_reg__
+ 1056 0034 00C0      		rjmp .L87
+ 1057               	.L82:
+ 1058               	/* epilogue start */
+ 1059               	.LBE291:
+ 1060               	.LBE290:
+ 181:../src/power.c **** 		capRisingEdgeISR();
+ 182:../src/power.c **** 	}else{
+ 183:../src/power.c **** 		capFallingEdgeISR();
+ 184:../src/power.c **** 	}
+ 185:../src/power.c **** }
+ 1061               		.loc 1 185 0
+ 1062 0036 FF91      		pop r31
+ 1063 0038 EF91      		pop r30
+ 1064 003a BF91      		pop r27
+ 1065 003c AF91      		pop r26
+ 1066 003e 9F91      		pop r25
+ 1067 0040 8F91      		pop r24
+ 1068 0042 7F91      		pop r23
+ 1069 0044 6F91      		pop r22
+ 1070 0046 5F91      		pop r21
+ 1071 0048 4F91      		pop r20
+ 1072 004a 3F91      		pop r19
+ 1073 004c 2F91      		pop r18
+ 1074 004e 0F90      		pop r0
+ 1075 0050 0BBE      		out __RAMPZ__,r0
+ 1076 0052 0F90      		pop r0
+ 1077 0054 0FBE      		out __SREG__,r0
+ 1078 0056 0F90      		pop r0
+ 1079 0058 1F90      		pop r1
+ 1080 005a 1895      		reti
+ 1081               	.L83:
+ 1082               	.LBB293:
+ 1083               	.LBB294:
+ 160:../src/power.c **** 		if(!(legsPowered() || legsFloating())){
+ 1084               		.loc 1 160 0
+ 1085 005c 8091 0000 		lds r24,unpoweredFixActive
+ 1086 0060 8111      		cpse r24,__zero_reg__
+ 1087 0062 00C0      		rjmp .L82
+ 161:../src/power.c **** 			unpoweredFixActive = 1;
+ 1088               		.loc 1 161 0
+ 1089 0064 0E94 0000 		call legsPowered
+ 1090               	.LVL81:
+ 1091 0068 8111      		cpse r24,__zero_reg__
+ 1092 006a 00C0      		rjmp .L82
+ 1093 006c 0E94 0000 		call legsFloating
+ 1094               	.LVL82:
+ 1095 0070 8111      		cpse r24,__zero_reg__
+ 1096 0072 00C0      		rjmp .L82
+ 162:../src/power.c **** 			moveSteps(6,50);
+ 1097               		.loc 1 162 0
+ 1098 0074 81E0      		ldi r24,lo8(1)
+ 1099 0076 8093 0000 		sts unpoweredFixActive,r24
+ 163:../src/power.c **** 			failedLegChecks = 0;
+ 1100               		.loc 1 163 0
+ 1101 007a 62E3      		ldi r22,lo8(50)
+ 1102 007c 70E0      		ldi r23,0
+ 1103 007e 86E0      		ldi r24,lo8(6)
+ 1104 0080 0E94 0000 		call moveSteps
+ 1105               	.LVL83:
+ 164:../src/power.c **** 			scheduleTask(150, stopLowPowerMoveTask, NULL);
+ 1106               		.loc 1 164 0
+ 1107 0084 1092 0000 		sts failedLegChecks,__zero_reg__
+ 165:../src/power.c **** 		}
+ 1108               		.loc 1 165 0
+ 1109 0088 20E0      		ldi r18,0
+ 1110 008a 30E0      		ldi r19,0
+ 1111 008c 40E0      		ldi r20,lo8(gs(stopLowPowerMoveTask))
+ 1112 008e 50E0      		ldi r21,hi8(gs(stopLowPowerMoveTask))
+ 1113 0090 66E9      		ldi r22,lo8(-106)
+ 1114 0092 70E0      		ldi r23,0
+ 1115 0094 80E0      		ldi r24,0
+ 1116 0096 90E0      		ldi r25,0
+ 1117 0098 0E94 0000 		call scheduleTask
+ 1118               	.LVL84:
+ 1119               	.LBE294:
+ 1120               	.LBE293:
+ 1121               		.loc 1 185 0
+ 1122 009c 00C0      		rjmp .L82
+ 1123               	.L87:
+ 1124               	.LBB295:
+ 1125               	.LBB292:
+ 172:../src/power.c **** 		failedLegChecks = 0;
+ 1126               		.loc 1 172 0
+ 1127 009e 0E94 0000 		call stopMove
+ 1128               	.LVL85:
+ 173:../src/power.c **** 		unpoweredFixActive = 0;
+ 1129               		.loc 1 173 0
+ 1130 00a2 1092 0000 		sts failedLegChecks,__zero_reg__
+ 174:../src/power.c **** 	}
+ 1131               		.loc 1 174 0
+ 1132 00a6 1092 0000 		sts unpoweredFixActive,__zero_reg__
+ 1133 00aa 00C0      		rjmp .L82
+ 1134               	.LBE292:
+ 1135               	.LBE295:
+ 1136               		.cfi_endproc
+ 1137               	.LFE66:
+ 1139               		.section	.rodata.CSWTCH.53,"a",@progbits
+ 1142               	CSWTCH.53:
+ 1143 0000 10        		.byte	16
+ 1144 0001 18        		.byte	24
+ 1145 0002 20        		.byte	32
+ 1146               		.comm	unpoweredFixActive,1,1
+ 1147               		.comm	failedLegChecks,1,1
+ 1148               		.comm	mmPerKilostep,16,1
+ 1149               		.comm	motorAdjusts,48,1
+ 1150               		.section	.bss.task_storage_arr,"aw",@nobits
+ 1153               	task_storage_arr:
+ 1154 0000 0000 0000 		.zero	140
+ 1154      0000 0000 
+ 1154      0000 0000 
+ 1154      0000 0000 
+ 1154      0000 0000 
+ 1155               		.comm	task_executing,1,1
+ 1156               		.comm	num_tasks,1,1
+ 1157               		.comm	task_list,2,1
+ 1158               		.comm	rtc_epoch,2,1
+ 1159               		.comm	droplet_ID,2,1
+ 1160               		.text
+ 1161               	.Letext0:
+ 1162               		.file 5 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\in
+ 1163               		.file 6 "C:/Program Files (x86)/Atmel/Studio/7.0/packs/atmel/XMEGAA_DFP/1.1.68/include/avr/iox128a
+ 1164               		.file 7 "../include/droplet_base.h"
+ 1165               		.file 8 "../include/scheduler.h"
+ 1166               		.file 9 "../include/motor.h"
+ 1167               		.file 10 "../include/power.h"
+ 1168               		.file 11 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\i
+DEFINED SYMBOLS
+                            *ABS*:00000000 power.c
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:2      *ABS*:0000003e __SP_H__
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:3      *ABS*:0000003d __SP_L__
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:4      *ABS*:0000003f __SREG__
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:5      *ABS*:0000003b __RAMPZ__
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:6      *ABS*:00000034 __CCP__
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:7      *ABS*:00000000 __tmp_reg__
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:8      *ABS*:00000001 __zero_reg__
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:15     .text.enableLowPowerInterrupt:00000000 enableLowPowerInterrupt
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:37     .text.stopLowPowerMoveTask:00000000 stopLowPowerMoveTask
+                            *COM*:00000001 unpoweredFixActive
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:592    .text.checkLegsTask:00000000 checkLegsTask
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:76     .text.capMonitorInit:00000000 capMonitorInit
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:138    .text.powerInit:00000000 powerInit
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:204    .text.disableLowPowerInterrupt:00000000 disableLowPowerInterrupt
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:225    .text.legMonitorInit:00000000 legMonitorInit
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:284    .text.capStatus:00000000 capStatus
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:304    .text.legStatus:00000000 legStatus
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:1142   .rodata.CSWTCH.53:00000000 CSWTCH.53
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:409    .text.legsPowered:00000000 legsPowered
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:520    .text.legsFloating:00000000 legsFloating
+                            *COM*:00000001 failedLegChecks
+                            *COM*:00000030 motorAdjusts
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:973    .text.__vector_36:00000000 __vector_36
+                            *COM*:00000010 mmPerKilostep
+C:\Users\kedar\AppData\Local\Temp\ccCqwxPE.s:1153   .bss.task_storage_arr:00000000 task_storage_arr
+                            *COM*:00000001 task_executing
+                            *COM*:00000001 num_tasks
+                            *COM*:00000002 task_list
+                            *COM*:00000002 rtc_epoch
+                            *COM*:00000002 droplet_ID
+
+UNDEFINED SYMBOLS
+stopMove
+scheduleTask
+__floatsisf
+__fixsfsi
+pow
+moveSteps
+__do_copy_data
+__do_clear_bss

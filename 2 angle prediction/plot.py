@@ -3,6 +3,8 @@ import numpy as np
 import math
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
+import matplotlib.mlab as mlab
+from scipy.stats import norm
 
 arr=np.loadtxt(fname='C:/Users/kedar/OneDrive - UCB-O365/Documents/Droplets/Prof. Orit/2 angle prediction/test.txt',dtype=float)
 
@@ -22,8 +24,8 @@ for i in range(37):
     poly.fit(x_poly, y)
     lin2 = LinearRegression()
     lin2.fit(x_poly, y)
-    #plt.plot(x, lin2.predict(poly.fit_transform(x)))
-    plt.plot(x,y)
+    plt.plot(x, lin2.predict(poly.fit_transform(x)))
+    #plt.plot(x,y)
 
 plt.show()
 ################################angle
@@ -47,20 +49,30 @@ for m in range(37):
 print('angle=', angle)
 np.savetxt('C:/Users/kedar/OneDrive - UCB-O365/Documents/Droplets/Prof. Orit/2 angle prediction/angle.txt',angle,fmt='%s',delimiter=' ')
 
-avgangle=[]
-for i in range(37):
-    addx=0
-    for j in range(9):
-        addx=addx+float(angle[i][j])
-    avgangle.append(addx/37)
-
 angle = angle.astype(np.float)
 #plt.rcParams.update({'figure.figsize':(7,5), 'figure.dpi':100})
 #x = np.random.normal(size = 1000)
 
 for step in range(49):
-    plt.hist(angle[:,step], bins=80, range=[-180,180])
+
+    mean=np.mean(angle[:,step])
+    std=np.std(angle[:,step])
+    plt.hist(angle[:,step], bins=100, range=[-180,180])
+    bins=100
     plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
+    plt.axvline(x=mean, color='red')
+    plt.axvline(x=(mean+std), color='green')
+    plt.axvline(x=(mean-std), color='green')
+    '''
+    (mu, sigma) = norm.fit(angle[:, step])
+    n, bins, patches = plt.hist(
+        angle[:, step], 60, density=100, facecolor='blue', alpha=0.5)
+    plt.axvline(x=mu, color='red')
+    plt.axvline(x=(mu+sigma), color='green')
+    plt.axvline(x=(mu-sigma), color='green')
+    y = norm.pdf(bins, mu, sigma)
+    l = plt.plot(bins, y, 'y--', linewidth=1)
+    '''
     #plt.show()
-    plt.savefig('C:/Users/kedar/OneDrive - UCB-O365/Documents/Droplets/Prof. Orit/2 angle prediction/histogram/angle'+str(step+1)+'.png')
+    plt.savefig('C:/Users/kedar/OneDrive - UCB-O365/Documents/Droplets/Prof. Orit/2 angle prediction/histogram/angle'+str(step)+'.png')
     plt.cla()

@@ -29,7 +29,7 @@ for vid in range(37):
 
             # define range of white color in HSV
             # change it according to your need !
-            lower_white = np.array([30,0,0], dtype=np.uint8)
+            lower_white = np.array([40,0,0], dtype=np.uint8)
             upper_white = np.array([179,255,255], dtype=np.uint8)
 
             # Threshold the HSV image to get only white colors
@@ -69,7 +69,7 @@ for vid in range(37):
                 # I draw a black little empty circle in the centroid position
                 cv2.circle(img,c,5,(0,0,0),1)
 
-            cv2.imshow('image', img)
+            cv2.imshow('image'+str(vid), img)
             cv2.waitKey(1)
         if ret==0:
             break
